@@ -1,282 +1,305 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Retro Arcade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nolan's Games</title>
   <style>
     body {
-      background-color: #1a1a1a;
-      color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      background-color: #1a0033;
       font-family: 'Courier New', monospace;
-      text-align: center;
-      padding: 2rem;
+      color: #f0f0f0;
+      overflow-x: hidden;
     }
+
     h1 {
+      text-align: center;
       font-size: 3rem;
-      margin-bottom: 1rem;
-    }
-    .gallery {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 1rem;
       margin-top: 2rem;
+      color: #ff99ff;
     }
-    .gallery img {
-      width: 300px;
-      height: auto;
-      border: 4px solid #f5f5f5;
-      box-shadow: 0 0 10px #ff00cc;
+
+    .background {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      overflow: hidden;
+      z-index: -1;
     }
-    .caption {
-      margin-top: 0.5rem;
-      font-size: 1rem;
-      color: #ffcc00;
+
+    .background div {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background-color: rgba(200, 100, 255, 0.2);
+      transform: rotate(45deg);
+      animation: float 30s linear infinite;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(0) rotate(45deg);
+      }
+      100% {
+        transform: translateY(-1000px) rotate(45deg);
+      }
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      padding: 40px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .game-box {
+      background-color: #2a0044;
+      border-radius: 15px;
+      overflow: hidden;
+      padding: 20px;
+      position: relative;
+      height: 500px;
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.4);
+    }
+
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      color: #ccc;
+      font-size: 1.2rem;
+      transition: 0.3s;
+    }
+
+    .overlay button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background: #9900cc;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    canvas {
+      border-radius: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>🎮 Retro Arcade</h1>
-  <p>Step back in time with these classic vibes.</p>
-
-  <div class="gallery">
-    <div>
-      <img src="https://cdn.pixabay.com/photo/2016/11/29/03/53/retro-1868728_1280.jpg" alt="Retro Camera" />
-      <div class="caption">Vintage Camera</div>
-    </div>
-    <div>
-      <img src="https://cdn.pixabay.com/photo/2016/11/29/03/53/retro-1868727_1280.jpg" alt="Cassette Tapes" />
-      <div class="caption">Cassette Tapes</div>
-    </div>
-    <div>
-      <img src="https://cdn.pixabay.com/photo/2017/08/10/07/32/retro-2616748_1280.jpg" alt="Retro TV" />
-      <div class="caption">Retro Television</div>
-    </div>
-    <div>
-      <img src="https://cdn.pixabay.com/photo/2016/11/29/03/53/retro-1868726_1280.jpg" alt="Vinyl Record" />
-      <div class="caption">Vinyl Record</div>
-    </div>
+  <h1>Nolan's Games</h1>
+  <div class="background">
+    <div style="top: 80vh; left: 5vw;"></div>
+    <div style="top: 90vh; left: 25vw;"></div>
+    <div style="top: 85vh; left: 45vw;"></div>
+    <div style="top: 95vh; left: 65vw;"></div>
+    <div style="top: 92vh; left: 85vw;"></div>
   </div>
-</body>
-</html>
 
-<body>
-  <header>Nolan's Games</header>
   <div class="container">
-    <div class="grid" id="game-grid">
-      <!-- Game 1: Gravity Switcher -->
-      <div class="game-box">
-        <div class="parallax"></div>
-        <div class="overlay" id="overlay-gravity">
-          <h2>Gravity Switcher</h2>
-          <button data-game="gravity">Play</button>
-        </div>
-        <div id="game-gravity"></div>
+    <div class="game-box">
+      <div class="overlay" id="overlay1">
+        <div>Gravity Switcher</div>
+        <button onclick="startGame('game1')">Play</button>
       </div>
-      <!-- Game 2: Space Shooter -->
-      <div class="game-box">
-        <div class="parallax"></div>
-        <div class="overlay" id="overlay-shooter">
-          <h2>Space Shooter</h2>
-          <button data-game="shooter">Play</button>
-        </div>
-        <div id="game-shooter"></div>
-      </div>
-      <!-- Game 3: Platform Jumper -->
-      <div class="game-box">
-        <div class="parallax"></div>
-        <div class="overlay" id="overlay-jumper">
-          <h2>Platform Jumper</h2>
-          <button data-game="jumper">Play</button>
-        </div>
-        <div id="game-jumper"></div>
-      </div>
-      <!-- Game 4: Block Drop -->
-      <div class="game-box">
-        <div class="parallax"></div>
-        <div class="overlay" id="overlay-drop">
-          <h2>Block Drop</h2>
-          <button data-game="drop">Play</button>
-        </div>
-        <div id="game-drop"></div>
-      </div>
-      <!-- 23 Coming Soon -->
+      <canvas id="game1" width="300" height="400"></canvas>
     </div>
+
+    <div class="game-box">
+      <div class="overlay" id="overlay2">
+        <div>Wall Jumper</div>
+        <button onclick="startGame('game2')">Play</button>
+      </div>
+      <canvas id="game2" width="300" height="400"></canvas>
+    </div>
+
+    <div class="game-box">
+      <div class="overlay" id="overlay3">
+        <div>Laser Dodger</div>
+        <button onclick="startGame('game3')">Play</button>
+      </div>
+      <canvas id="game3" width="300" height="400"></canvas>
+    </div>
+
+    <div class="game-box">
+      <div class="overlay" id="overlay4">
+        <div>Falling Blocks</div>
+        <button onclick="startGame('game4')">Play</button>
+      </div>
+      <canvas id="game4" width="300" height="400"></canvas>
+    </div>
+
+    <!-- The rest of the 3x9 boxes -->
+    <!-- You can duplicate the following div to complete all 27 boxes -->
+    <!-- Here, we add 'Coming Soon' boxes -->
+    <script>
+      for (let i = 5; i <= 27; i++) {
+        document.write(`
+          <div class="game-box">
+            <div class="overlay">
+              <div>Coming Soon</div>
+            </div>
+          </div>
+        `);
+      }
+    </script>
   </div>
+
   <script>
-    // Parallax effect
-    window.addEventListener('scroll', () => {
-      document.querySelectorAll('.parallax').forEach(el => {
-        el.style.transform = `translateY(${window.pageYOffset * 0.2}px)`;
-      });
-    });
-    // Generate placeholders
-    const grid = document.getElementById('game-grid');
-    for (let i = 0; i < 23; i++) {
-      const box = document.createElement('div'); box.className = 'game-box';
-      const par = document.createElement('div'); par.className = 'parallax';
-      const ov = document.createElement('div'); ov.className = 'overlay';
-      const txt = document.createElement('div'); txt.className = 'coming-soon'; txt.textContent = 'Coming Soon';
-      ov.appendChild(txt);
-      box.append(par, ov);
-      grid.append(box);
-    }
-    // Manage Phaser games
-    const games = {};
-    function stopAll() { Object.values(games).forEach(g => g && g.destroy(true)); }
-    document.querySelectorAll('.overlay button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const key = btn.getAttribute('data-game');
-        stopAll();
-        document.getElementById(`overlay-${key}`).classList.add('hidden');
-        startGame(key);
-      });
-    });
-    function restart(key) { stopAll(); document.getElementById(`overlay-${key}`).classList.remove('hidden'); }
-    function startGame(key) {
-      if (key === 'gravity') initGravity();
-      if (key === 'shooter') initShooter();
-      if (key === 'jumper') initJumper();
-      if (key === 'drop') initDrop();
-    }
-    // ---- Gravity Switcher ----
-    function initGravity() {
-      let speed = 100, timer = 0, obs = [];
-      const cfg = {
-        type: Phaser.AUTO,
-        width: 400,
-        height: 300,
-        backgroundColor: 'transparent',
-        parent: 'game-gravity',
-        physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
-        scene: { create, update }
-      };
-      games.gravity = new Phaser.Game(cfg);
-      function create() {
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.player = this.physics.add.rectangle(50, 270, 20, 20, 0x00ffb3);
-        this.physics.add.existing(this.player);
-        this.player.body.setImmovable(true).setCollideWorldBounds(true);
-        this.time.addEvent({ delay: 100, loop: true, callback: () => speed += 0.5 });
+    let activeCanvas = null;
+
+    function startGame(id) {
+      if (activeCanvas) {
+        stopGame(activeCanvas);
       }
-      function update(_, dt) {
-        if (this.cursors.up.isDown)
-          this.tweens.add({ targets: this.player, y: 30, duration: 200, overwrite: true });
-        else if (this.cursors.down.isDown)
-          this.tweens.add({ targets: this.player, y: 270, duration: 200, overwrite: true });
-        timer += dt;
-        if (obs.length < 2 && timer > 1000) { spawn(); timer = 0; }
-        obs.forEach((o, i) => {
-          o.x -= (speed * dt) / 1000;
-          if (o.x < -50) { o.destroy(); obs.splice(i, 1); spawn(); }
-          if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), o.getBounds()))
-            restart('gravity');
+
+      document.getElementById('overlay' + id.replace('game', '')).style.display = 'none';
+      activeCanvas = id;
+
+      if (id === 'game1') gravitySwitcher(id);
+      else if (id === 'game2') wallJumper(id);
+      else if (id === 'game3') laserDodger(id);
+      else if (id === 'game4') fallingBlocks(id);
+    }
+
+    function stopGame(id) {
+      const canvas = document.getElementById(id);
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      document.getElementById('overlay' + id.replace('game', '')).style.display = 'flex';
+    }
+
+    function gravitySwitcher(id) {
+      const canvas = document.getElementById(id);
+      const ctx = canvas.getContext('2d');
+      let y = canvas.height - 30;
+      let gravity = -3;
+      let redY = 0;
+      let score = 0;
+      let gameOver = false;
+
+      function draw() {
+        if (gameOver) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Red obstacle
+        ctx.fillStyle = 'red';
+        ctx.fillRect(canvas.width / 2 - 10, redY, 20, 20);
+
+        // Green player
+        ctx.fillStyle = 'lime';
+        ctx.fillRect(canvas.width / 2 - 10, y, 20, 20);
+
+        // Collision
+        if (y < redY + 20 && y + 20 > redY && canvas.width / 2 - 10 < canvas.width / 2 + 10) {
+          gameOver = true;
+          stopGame(id);
+          return;
+        }
+
+        y += gravity;
+        if (y < 0) y = 0;
+        if (y > canvas.height - 20) y = canvas.height - 20;
+      }
+
+      document.onkeydown = (e) => {
+        if (e.code === 'Space') gravity = -gravity;
+      };
+
+      setInterval(draw, 30);
+    }
+
+    function wallJumper(id) {
+      const canvas = document.getElementById(id);
+      const ctx = canvas.getContext('2d');
+      let x = 0;
+      let y = canvas.height / 2;
+      let direction = 1;
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'cyan';
+        ctx.fillRect(x, y, 20, 20);
+
+        x += direction * 2;
+        if (x <= 0 || x >= canvas.width - 20) direction *= -1;
+      }
+      setInterval(draw, 30);
+    }
+
+    function laserDodger(id) {
+      const canvas = document.getElementById(id);
+      const ctx = canvas.getContext('2d');
+      let x = canvas.width / 2;
+      let lasers = [
+        { y: 0, x: Math.random() * (canvas.width - 20) }
+      ];
+
+      document.onkeydown = (e) => {
+        if (e.code === 'ArrowLeft') x -= 10;
+        if (e.code === 'ArrowRight') x += 10;
+      };
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'orange';
+        ctx.fillRect(x, canvas.height - 20, 20, 20);
+
+        ctx.fillStyle = 'red';
+        lasers.forEach(l => {
+          ctx.fillRect(l.x, l.y, 20, 20);
+          l.y += 5;
+
+          // Collision
+          if (l.y + 20 >= canvas.height - 20 && l.x < x + 20 && l.x + 20 > x) {
+            stopGame(id);
+          }
         });
-      }
-      function spawn() {
-        const y = Math.random() > 0.5 ? 30 : 270;
-        const o = games.gravity.scene.scenes[0].add.rectangle(420, y, 50, 20, 0xff0000);
-        games.gravity.scene.scenes[0].physics.add.existing(o, true);
-        obs.push(o);
-      }
-    }
-    // ---- Space Shooter ----
-    function initShooter() {
-      let ship, bullets, enemies;
-      const cfg = {
-        type: Phaser.AUTO,
-        width: 400,
-        height: 300,
-        backgroundColor: 'transparent',
-        parent: 'game-shooter',
-        physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
-        scene: { preload, create, update }
-      };
-      games.shooter = new Phaser.Game(cfg);
-      function preload() {
-        this.load.image('ship', 'https://i.imgur.com/6b7YjkQ.png');
-        this.load.image('bullet', 'https://i.imgur.com/KYJcpuT.png');
-        this.load.image('enemy', 'https://i.imgur.com/FJz6Z4G.png');
-      }
-      function create() {
-        this.cursors = this.input.keyboard.createCursorKeys();
-        ship = this.physics.add.sprite(200, 280, 'ship').setScale(0.3).setCollideWorldBounds(true);
-        bullets = this.physics.add.group();
-        enemies = this.physics.add.group();
-        this.time.addEvent({ delay: 1500, loop: true, callback: () => {
-          const x = Phaser.Math.Between(50, 350);
-          const e = enemies.create(x, 0, 'enemy').setScale(0.2);
-          e.body.setVelocityY(100 + this.time.now / 2000);
-        }});
-        this.physics.add.overlap(bullets, enemies, (b, e) => { b.destroy(); e.destroy(); });
-        this.physics.add.overlap(ship, enemies, () => restart('shooter'));  }
-      function update() {
-        ship.setVelocityX(0);
-        if (this.cursors.left.isDown) ship.setVelocityX(-200);
-        else if (this.cursors.right.isDown) ship.setVelocityX(200);
-        if (Phaser.Input.Keyboard.JustDown(this.cursors.space)) {
-          const b = bullets.create(ship.x, ship.y - 20, 'bullet').setScale(0.2);
-          b.body.setVelocityY(-300);
+
+        if (Math.random() < 0.05) {
+          lasers.push({ y: 0, x: Math.random() * (canvas.width - 20) });
         }
       }
+
+      setInterval(draw, 30);
     }
-    // ---- Platform Jumper ----
-    function initJumper() {
-      let playerJ, platforms;
-      const cfg = {
-        type: Phaser.AUTO,
-        width: 400,
-        height: 300,
-        backgroundColor: 'transparent',
-        parent: 'game-jumper',
-        physics: { default: 'arcade', arcade: { gravity: { y: 500 } } },
-        scene: { preload, create, update }
-      };
-      games.jumper = new Phaser.Game(cfg);
-      function preload() { this.load.image('block', 'https://i.imgur.com/8gSx4fT.png'); }
-      function create() {
-        this.cursors = this.input.keyboard.createCursorKeys();
-        platforms = this.physics.add.staticGroup();
-        platforms.create(200, 300, 'block').setScale(4, 0.5).refreshBody();
-        playerJ = this.physics.add.sprite(50, 250, 'block').setTint(0x00ffaa).setDisplaySize(20, 20);
-        this.physics.add.collider(playerJ, platforms);
+
+    function fallingBlocks(id) {
+      const canvas = document.getElementById(id);
+      const ctx = canvas.getContext('2d');
+      let blocks = [];
+      let playerY = canvas.height - 20;
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'lime';
+        ctx.fillRect(canvas.width / 2 - 10, playerY, 20, 20);
+
+        ctx.fillStyle = 'blue';
+        blocks.forEach(b => {
+          b.y += 5;
+          ctx.fillRect(b.x, b.y, 20, 20);
+
+          if (b.y + 20 >= playerY) stopGame(id);
+        });
+
+        if (Math.random() < 0.1) blocks.push({ x: Math.random() * (canvas.width - 20), y: 0 });
       }
-      function update() {
-        if (this.cursors.left.isDown) playerJ.setVelocityX(-150);
-        else if (this.cursors.right.isDown) playerJ.setVelocityX(150);
-        else playerJ.setVelocityX(0);
-        if (Phaser.Input.Keyboard.JustDown(this.cursors.up) && playerJ.body.onFloor()) playerJ.setVelocityY(-300);
-        if (playerJ.y > 350) restart('jumper');
-      }
-    }
-    // ---- Block Drop ----
-    function initDrop() {
-      let dropC;
-      const cfg = {
-        type: Phaser.AUTO,
-        width: 400,
-        height: 300,
-        backgroundColor: 'transparent',
-        parent: 'game-drop',
-        physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
-        scene: { create, update }
-      };
-      games.drop = new Phaser.Game(cfg);
-      function create() {
-        dropC = this.input.keyboard.createCursorKeys();
-        this.drop = this.add.rectangle(200, 20, 50, 20, 0x00ff00);
-      }
-      function update() {
-        if (dropC.left.isDown && this.drop.y < 30) this.drop.x -= 5;
-        else if (dropC.right.isDown && this.drop.y < 30) this.drop.x += 5;
-        if (Phaser.Input.Keyboard.JustDown(dropC.space) && this.drop.y < 30) {
-          this.physics.world.enable(this.drop);
-          this.drop.body.setVelocityY(200);
-          this.physics.add.collider(this.drop, this.physics.add.staticGroup().create(this.drop.x, 300, null).setDisplaySize(50,20), ()=>restart('drop'));
-        }
-        if (this.drop.y > 350) restart('drop');
-      }
+
+      setInterval(draw, 30);
     }
   </script>
 </body>
