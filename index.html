@@ -21,16 +21,16 @@
       overflow-x: hidden;
     }
     header {
-      background: #2a0040;
+      background: #1a002d;
       color: white;
       text-align: center;
-      padding: 3rem 1rem;
+      padding: 5rem 1rem 1rem;
     }
     header h1 {
       font-size: 5rem;
     }
     .spacer {
-      height: 150px;
+      height: 1900px;
     }
     .game-grid {
       display: grid;
@@ -93,12 +93,16 @@
       font-size: 2rem;
       padding-top: 40%;
     }
-    .timer {
+    .shield-meter, .timer {
       position: absolute;
-      top: 5px;
+      bottom: 10px;
       left: 10px;
       color: white;
       font-size: 14px;
+    }
+    .timer {
+      top: 10px;
+      bottom: auto;
     }
   </style>
 </head>
@@ -107,11 +111,12 @@
     <h1>Nolan's Games</h1>
   </header>
   <div class="spacer"></div>
+
   <div class="game-grid" id="gameGrid">
     <div class="game-box" id="gravityBox">
-      <div class="timer" id="gameTimer">0.0s</div>
       <button class="play-btn" onclick="startGravitySwitcher(this)">Play</button>
       <canvas id="gravityCanvas" width="400" height="300"></canvas>
+      <div class="timer" id="gravityTimer">0.0s</div>
     </div>
     <div class="game-box"><div class="coming-soon">Coming Soon</div></div>
     <div class="game-box"><div class="coming-soon">Coming Soon</div></div>
@@ -134,21 +139,18 @@
 
         square.addEventListener('mousedown', (e) => {
           isDragging = true;
-          offset.x = e.clientX - square.getBoundingClientRect().left;
-          offset.y = e.clientY - square.getBoundingClientRect().top;
+          offset.x = e.clientX - square.offsetLeft;
+          offset.y = e.clientY - square.offsetTop;
           square.style.animation = 'none';
         });
 
         document.addEventListener('mousemove', (e) => {
           if (!isDragging) return;
-          square.style.top = `${e.clientY - offset.y}px`;
           square.style.left = `${e.clientX - offset.x}px`;
+          square.style.top = `${e.clientY - offset.y}px`;
         });
 
         document.addEventListener('mouseup', () => {
-          if (isDragging) {
-            square.style.animation = `floatUp var(--duration) linear infinite`;
-          }
           isDragging = false;
         });
 
@@ -159,13 +161,13 @@
 
     let gravityGame = {
       ctx: null,
-      player: { x: 80, y: 230, size: 20, gravity: 1 },
+      player: { x: 80, y: 250, size: 20, gravity: 1 },
       enemies: [],
       isRunning: false,
-      lastTime: 0,
       speed: 2,
       canvas: null,
-      timerStart: null
+      timer: 0,
+      timerId: null
     };
 
     function startGravitySwitcher(btn) {
@@ -177,15 +179,18 @@
       gravityGame.ctx = ctx;
       gravityGame.enemies = [];
       gravityGame.speed = 2;
-      gravityGame.player.y = 230;
+      gravityGame.timer = 0;
+      gravityGame.player.y = 250;
       gravityGame.isRunning = true;
-      gravityGame.timerStart = performance.now();
-      updateGravity(performance.now());
-      gravityGame.timerInterval = setInterval(() => {
-        if (gravityGame.isRunning) {
-          gravityGame.speed += 0.05;
-        }
-      }, 3000);
+      document.getElementById('gravityTimer').innerText = '0.0s';
+
+      gravityGame.timerId = setInterval(() => {
+        gravityGame.timer += 0.1;
+        document.getElementById('gravityTimer').innerText = `${gravityGame.timer.toFixed(1)}s`;
+        if (gravityGame.isRunning) gravityGame.speed += 0.05;
+      }, 100);
+
+      requestAnimationFrame(updateGravity);
     }
 
     document.addEventListener('keydown', (e) => {
@@ -201,8 +206,9 @@
 
     function animateGravitySwitch(direction) {
       const start = gravityGame.player.y;
-      const end = direction === 1 ? 230 : 30;
+      const end = direction === 1 ? 250 : 30;
       let startTime = null;
+
       function animate(time) {
         if (!startTime) startTime = time;
         const elapsed = time - startTime;
@@ -213,20 +219,21 @@
       requestAnimationFrame(animate);
     }
 
-    function updateGravity(timestamp) {
+    function updateGravity() {
       const { ctx, player, canvas, enemies } = gravityGame;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      player.y += 0.1 * player.gravity;
+      player.y = Math.max(30, Math.min(250, player.y));
 
       ctx.fillStyle = '#0f0';
       ctx.fillRect(player.x, player.y, player.size, player.size);
 
-      const lastEnemy = enemies[enemies.length - 1];
-      if (
-        Math.random() < 0.03 &&
-        (!lastEnemy || Math.abs(lastEnemy.y - (Math.random() < 0.5 ? 30 : 230)) > 60)
-      ) {
-        let y = Math.random() < 0.5 ? 30 : 230;
-        enemies.push({ x: 400, y: y, size: 20 });
+      if (Math.random() < 0.015) {
+        let y = Math.random() < 0.5 ? 30 : 250;
+        if (!enemies.some(e => Math.abs(e.y - y) < 50 && e.x > 300)) {
+          enemies.push({ x: 400, y: y, size: 20 });
+        }
       }
 
       ctx.fillStyle = '#f00';
@@ -246,16 +253,12 @@
         if (e.x + e.size < 0) enemies.splice(i, 1);
       }
 
-      if (gravityGame.isRunning) {
-        const elapsed = ((timestamp - gravityGame.timerStart) / 1000).toFixed(1);
-        document.getElementById('gameTimer').textContent = `${elapsed}s`;
-        requestAnimationFrame(updateGravity);
-      }
+      if (gravityGame.isRunning) requestAnimationFrame(updateGravity);
     }
 
     function endGravityGame() {
       gravityGame.isRunning = false;
-      clearInterval(gravityGame.timerInterval);
+      clearInterval(gravityGame.timerId);
       document.querySelector('#gravityBox .play-btn').style.display = 'block';
       document.body.style.overflow = 'auto';
     }
