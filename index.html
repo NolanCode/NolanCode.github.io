@@ -20,6 +20,15 @@
       background: var(--bg-dark);
       overflow-x: hidden;
     }
+    h1 {
+      color: white;
+      text-align: center;
+      font-size: 3rem;
+      padding: 2rem 1rem;
+    }
+    .spacer {
+      height: 200px;
+    }
     .game-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -32,7 +41,7 @@
       background: #000;
       border: 2px solid var(--highlight);
       border-radius: 10px;
-      height: 200px;
+      height: 300px;
       position: relative;
       overflow: hidden;
     }
@@ -65,6 +74,7 @@
       left: calc(100vw * var(--rand-x));
       transform: rotate(var(--rand-rot));
       animation: floatUp var(--duration) linear infinite;
+      pointer-events: auto;
     }
     @keyframes floatUp {
       from {
@@ -80,15 +90,25 @@
       font-size: 2rem;
       padding-top: 40%;
     }
+    .timer {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      z-index: 5;
+    }
   </style>
 </head>
 <body>
-  <h1 style="color: white; text-align: center; font-size: 3rem; padding: 2rem 1rem;">Nolan's Games</h1>
-
+  <h1>Nolan's Games</h1>
+  <div class="spacer"></div>
   <div class="game-grid" id="gameGrid">
     <div class="game-box" id="gravityBox">
+      <div class="timer" id="gameTimer">0.0s</div>
       <button class="play-btn" onclick="startGravitySwitcher(this)">Play</button>
-      <canvas id="gravityCanvas" width="300" height="200"></canvas>
+      <canvas id="gravityCanvas"></canvas>
     </div>
     <div class="game-box"><div class="coming-soon">Coming Soon</div></div>
     <div class="game-box"><div class="coming-soon">Coming Soon</div></div>
@@ -98,7 +118,6 @@
   </div>
 
   <script>
-    // Floating Background Squares
     function spawnSquares(count = 10) {
       for (let i = 0; i < count; i++) {
         const square = document.createElement('div');
@@ -107,8 +126,8 @@
         square.style.setProperty('--rand-rot', `${Math.random() * 360}deg`);
         square.style.setProperty('--duration', `${5 + Math.random() * 10}s`);
 
-        let offset = { x: 0, y: 0 };
         let isDragging = false;
+        let offset = { x: 0, y: 0 };
 
         square.addEventListener('mousedown', (e) => {
           isDragging = true;
@@ -119,16 +138,12 @@
 
         document.addEventListener('mousemove', (e) => {
           if (!isDragging) return;
-          square.style.position = 'fixed';
-          square.style.left = `${e.clientX - offset.x}px`;
           square.style.top = `${e.clientY - offset.y}px`;
+          square.style.left = `${e.clientX - offset.x}px`;
         });
 
         document.addEventListener('mouseup', () => {
-          if (isDragging) {
-            square.style.animation = '';
-            isDragging = false;
-          }
+          isDragging = false;
         });
 
         document.body.appendChild(square);
@@ -136,14 +151,16 @@
     }
     spawnSquares();
 
-    // Gravity Switcher Game Logic
     let gravityGame = {
       ctx: null,
-      player: { x: 40, y: 140, size: 15, gravity: 1 },
+      player: { x: 60, y: 220, size: 15, gravity: 1 },
       enemies: [],
       isRunning: false,
+      lastTime: 0,
       speed: 2,
-      canvas: null
+      canvas: null,
+      timer: 0,
+      timerInterval: null
     };
 
     function startGravitySwitcher(btn) {
@@ -155,15 +172,15 @@
       gravityGame.ctx = ctx;
       gravityGame.enemies = [];
       gravityGame.speed = 2;
-      gravityGame.player.y = 140;
+      gravityGame.player.y = 220;
       gravityGame.isRunning = true;
+      gravityGame.timer = 0;
+      document.getElementById('gameTimer').textContent = '0.0s';
+      gravityGame.timerInterval = setInterval(() => {
+        gravityGame.timer += 0.1;
+        document.getElementById('gameTimer').textContent = gravityGame.timer.toFixed(1) + 's';
+      }, 100);
       requestAnimationFrame(updateGravity);
-
-      setInterval(() => {
-        if (gravityGame.isRunning) {
-          gravityGame.speed += 0.1;
-        }
-      }, 2000);
     }
 
     document.addEventListener('keydown', (e) => {
@@ -179,7 +196,7 @@
 
     function animateGravitySwitch(direction) {
       const start = gravityGame.player.y;
-      const end = direction === 1 ? 140 : 30;
+      const end = direction === 1 ? 220 : 30;
       let startTime = null;
 
       function animate(time) {
@@ -192,15 +209,20 @@
       requestAnimationFrame(animate);
     }
 
-    function updateGravity() {
+    function updateGravity(timestamp) {
       const { ctx, player, canvas, enemies } = gravityGame;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       ctx.fillStyle = '#0f0';
       ctx.fillRect(player.x, player.y, player.size, player.size);
 
-      if (Math.random() < 0.03) {
-        enemies.push({ x: 300, y: Math.random() < 0.5 ? 30 : 140, size: 15 });
+      if (Math.random() < 0.02) {
+        let lastY = enemies.length ? enemies[enemies.length - 1].y : null;
+        let newY = Math.random() < 0.5 ? 30 : 220;
+        if (lastY !== null && Math.abs(lastY - newY) < 100) {
+          newY = newY === 30 ? 220 : 30;
+        }
+        enemies.push({ x: 350, y: newY, size: 15 });
       }
 
       ctx.fillStyle = '#f00';
@@ -227,6 +249,7 @@
       gravityGame.isRunning = false;
       document.querySelector('#gravityBox .play-btn').style.display = 'block';
       document.body.style.overflow = 'auto';
+      clearInterval(gravityGame.timerInterval);
     }
   </script>
 </body>
