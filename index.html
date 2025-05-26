@@ -16,19 +16,18 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: var(--bg-color) url('https://i.imgur.com/3Z5bQPl.png') no-repeat center / cover;
+      background: var(--bg-color) url('https://i.imgur.com/3Z5bQPl.png') no-repeat center/cover;
       color: var(--text-light);
       font-family: 'Press Start 2P', cursive, sans-serif;
-      overflow-y: scroll;
+      overflow-y: auto;
     }
     header {
-      text-align: center;
-      padding: 20px;
-      font-size: 32px;
-      letter-spacing: 2px;
       position: sticky;
       top: 0;
       background: var(--panel-color);
+      padding: 20px;
+      text-align: center;
+      font-size: 32px;
       z-index: 10;
     }
     .container {
@@ -60,8 +59,13 @@
       transition: opacity 0.3s;
       z-index: 5;
     }
-    .overlay.hidden { opacity: 0; pointer-events: none; }
-    .overlay h2 { margin-bottom: 10px; }
+    .overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .overlay h2 {
+      margin-bottom: 10px;
+    }
     .overlay button {
       padding: 8px 16px;
       font-family: inherit;
@@ -73,24 +77,25 @@
     }
     .parallax {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: url('https://i.imgur.com/AdXqO6Q.png') no-repeat center / contain;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: url('https://i.imgur.com/AdXqO6Q.png') no-repeat center/contain;
       opacity: 0.2;
       pointer-events: none;
       transform: translateY(0);
       transition: transform 0.1s;
     }
-    .coming-soon { font-size: 18px; }
+    .coming-soon {
+      font-size: 18px;
+      color: var(--text-light);
+    }
   </style>
 </head>
 <body>
   <header>Nolan's Games</header>
   <div class="container">
-    <div class="grid">
-      <!-- Game 1: Gravity Switcher -->
+    <div class="grid" id="game-grid">
+      <!-- Four playable game boxes -->
       <div class="game-box">
         <div class="parallax"></div>
         <div class="overlay" id="overlay-gravity">
@@ -99,7 +104,6 @@
         </div>
         <div id="game-gravity"></div>
       </div>
-      <!-- Game 2: Space Shooter -->
       <div class="game-box">
         <div class="parallax"></div>
         <div class="overlay" id="overlay-shooter">
@@ -108,7 +112,6 @@
         </div>
         <div id="game-shooter"></div>
       </div>
-      <!-- Game 3: Platform Jumper -->
       <div class="game-box">
         <div class="parallax"></div>
         <div class="overlay" id="overlay-jumper">
@@ -117,7 +120,6 @@
         </div>
         <div id="game-jumper"></div>
       </div>
-      <!-- Game 4: Block Drop -->
       <div class="game-box">
         <div class="parallax"></div>
         <div class="overlay" id="overlay-drop">
@@ -126,170 +128,190 @@
         </div>
         <div id="game-drop"></div>
       </div>
-      <!-- Remaining placeholders -->
-      <!-- 23 placeholders to fill 27 total -->
+      <!-- 23 'Coming Soon' placeholders -->
     </div>
   </div>
   <script>
-    // Parallax scroll
+    // Parallax background effect on scroll
     window.addEventListener('scroll', () => {
       document.querySelectorAll('.parallax').forEach(el => {
         el.style.transform = `translateY(${window.pageYOffset * 0.2}px)`;
       });
     });
-    // Generate placeholders
-    const grid = document.querySelector('.grid');
+    // Generate 'Coming Soon' placeholders
+    const grid = document.getElementById('game-grid');
     for (let i = 0; i < 23; i++) {
-      const box = document.createElement('div'); box.className = 'game-box';
+      const box = document.createElement('div');
+      box.className = 'game-box';
       const par = document.createElement('div'); par.className = 'parallax';
-      const ov = document.createElement('div'); ov.className = 'overlay';
-      const txt = document.createElement('div'); txt.className = 'coming-soon'; txt.textContent = 'Coming Soon';
-      ov.append(txt);
-      box.append(par, ov);
-      grid.append(box);
+      const overlay = document.createElement('div'); overlay.className = 'overlay';
+      const text = document.createElement('div'); text.className = 'coming-soon';
+      text.textContent = 'Coming Soon';
+      overlay.appendChild(text);
+      box.appendChild(par);
+      box.appendChild(overlay);
+      grid.appendChild(box);
     }
     // Manage game instances
     const games = {};
-    function stopAll() {
-      Object.values(games).forEach(g => { if (g) g.destroy(true); });
+    function stopAllGames() {
+      Object.keys(games).forEach(key => {
+        if (games[key]) games[key].destroy(true);
+      });
     }
-    // Game start handlers
+    // Overlay button handlers
     document.querySelectorAll('.overlay button').forEach(btn => {
       btn.addEventListener('click', () => {
-        const key = btn.getAttribute('data-game');
-        document.getElementById(`overlay-${key}`).classList.add('hidden');
-        stopAll();
-        initGame(key);
+        const gameKey = btn.getAttribute('data-game');
+        stopAllGames();
+        document.getElementById(`overlay-${gameKey}`).classList.add('hidden');
+        startGame(gameKey);
       });
     });
-    // Initialize selected game
-    function initGame(key) {
-      switch(key) {
+    // Start selected game
+    function startGame(key) {
+      switch (key) {
         case 'gravity': initGravity(); break;
         case 'shooter': initShooter(); break;
         case 'jumper': initJumper(); break;
         case 'drop': initDrop(); break;
       }
     }
-    // Gravity Switcher
-    function initGravity() {
-      const config = {
-        type: Phaser.AUTO, width:400, height:300, backgroundColor:'transparent', parent:'game-gravity',
-        physics:{ default:'arcade', arcade:{ gravity:{y:0} } },
-        scene:{ create: gravityCreate, update: gravityUpdate }
-      };
-      games.gravity = new Phaser.Game(config);
+    // Utility: restart game
+    function restartGame(key) {
+      stopAllGames();
+      document.getElementById(`overlay-${key}`).classList.remove('hidden');
     }
-    let gravPlayer, gravCursors, gravObs = [], gravTimer=0, gravSpeed=100;
+    // ---- Game 1: Gravity Switcher ----
+    function initGravity() {
+      gravObs = [];
+      gravSpeed = 100;
+      gravTimer = 0;
+      const cfg = {
+        type: Phaser.AUTO,
+        width: 400, height: 300,
+        backgroundColor: 'transparent', parent: 'game-gravity',
+        physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
+        scene: { create: gravityCreate, update: gravityUpdate }
+      };
+      games.gravity = new Phaser.Game(cfg);
+    }
+    let gravPlayer, gravCursors, gravObs, gravTimer, gravSpeed;
     function gravityCreate() {
       gravCursors = this.input.keyboard.createCursorKeys();
-      gravPlayer = this.physics.add.sprite(50,270).setDisplaySize(20,20).setTint(0x00ffb3);
-      gravPlayer.body.setAllowGravity(false).setImmovable(true).setCollideWorldBounds(true);
-      this.time.addEvent({ delay:100, loop:true, callback:()=>{ gravSpeed+=0.5; }});
+      gravPlayer = this.physics.add.rectangle(50, 270, 20, 20, 0x00ffb3);
+      this.physics.add.existing(gravPlayer);
+      gravPlayer.body.setImmovable(true).setCollideWorldBounds(true);
+      this.tweens.killAll();
+      this.time.addEvent({ delay: 100, loop: true, callback: () => gravSpeed += 0.5 });
     }
-    function gravityUpdate(_,dt) {
-      if (gravCursors.up.isDown) this.tweens.add({ targets:gravPlayer, y:30, duration:200 });
-      else if (gravCursors.down.isDown) this.tweens.add({ targets:gravPlayer, y:270, duration:200 });
-      gravTimer+=dt;
-      if (gravObs.length<2 && gravTimer>1000) { spawnGravOb(this); gravTimer=0; }
-      gravObs.forEach((o,i) => {
-        o.x -= gravSpeed*dt/1000;
-        if (o.x< -50) { o.destroy(); gravObs.splice(i,1); spawnGravOb(this); }
-        if (Phaser.Geom.Intersects.RectangleToRectangle(gravPlayer.getBounds(), o.getBounds())) restart('gravity');
+    function gravityUpdate(_, dt) {
+      if (gravCursors.up.isDown) this.tweens.add({ targets: gravPlayer, y: 30, duration: 200, overwrite: true });
+      else if (gravCursors.down.isDown) this.tweens.add({ targets: gravPlayer, y: 270, duration: 200, overwrite: true });
+      gravTimer += dt;
+      if (gravObs.length < 2 && gravTimer > 1000) { spawnGravOb(this); gravTimer = 0; }
+      gravObs.forEach((o, i) => {
+        o.x -= (gravSpeed * dt) / 1000;
+        if (o.x < -50) { o.destroy(); gravObs.splice(i, 1); spawnGravOb(this); }
+        if (Phaser.Geom.Intersects.RectangleToRectangle(gravPlayer.getBounds(), o.getBounds())) restartGame('gravity');
       });
     }
     function spawnGravOb(scene) {
-      const y = Math.random()>0.5?30:270;
-      const o = scene.add.rectangle(420,y,50,20,0xff0000).setOrigin(0.5);
-      scene.physics.add.existing(o,true);
-      gravObs.push(o);
+      const y = Math.random() > 0.5 ? 30 : 270;
+      const ob = scene.add.rectangle(420, y, 50, 20, 0xff0000);
+      scene.physics.add.existing(ob, true);
+      gravObs.push(ob);
     }
-    // Space Shooter
+    // ---- Game 2: Space Shooter ----
     function initShooter() {
-      const cfg = { type:Phaser.AUTO, width:400, height:300, backgroundColor:'transparent', parent:'game-shooter',
-        physics:{ default:'arcade', arcade:{ gravity:{y:0} } },
-        scene:{ preload:shootPre, create:shootCreate, update:shootUpdate }
+      const cfg = {
+        type: Phaser.AUTO, width: 400, height: 300,
+        backgroundColor: 'transparent', parent: 'game-shooter',
+        physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
+        scene: { preload: shooterPreload, create: shooterCreate, update: shooterUpdate }
       };
       games.shooter = new Phaser.Game(cfg);
     }
-    let shooterPlayer, bullets, enemies, shootCursor;
-    function shootPre() { this.load.image('ship','https://i.imgur.com/6b7YjkQ.png'); this.load.image('bullet','https://i.imgur.com/KYJcpuT.png'); this.load.image('enemy','https://i.imgur.com/FJz6Z4G.png'); }
-    function shootCreate() {
-      shootCursor = this.input.keyboard.createCursorKeys();
-      shooterPlayer = this.physics.add.sprite(200,280,'ship').setScale(0.3);
+    let ship, cursors, bullets, enemies;
+    function shooterPreload() {
+      this.load.image('ship', 'https://i.imgur.com/6b7YjkQ.png');
+      this.load.image('bullet', 'https://i.imgur.com/KYJcpuT.png');
+      this.load.image('enemy', 'https://i.imgur.com/FJz6Z4G.png');
+    }
+    function shooterCreate() {
+      cursors = this.input.keyboard.createCursorKeys();
+      ship = this.physics.add.sprite(200, 280, 'ship').setScale(0.3).setCollideWorldBounds(true);
       bullets = this.physics.add.group();
       enemies = this.physics.add.group();
-      this.time.addEvent({ delay:1500, loop:true, callback:()=>{
-        const x=Phaser.Math.Between(50,350);
-        const e = enemies.create(x,0,'enemy').setScale(0.2);
-        e.body.setVelocityY(100 + games.shooter.scene.scenes[0].time.now/10000*50);
+      this.time.addEvent({ delay: 1500, loop: true, callback: () => {
+        const x = Phaser.Math.Between(50, 350);
+        const e = enemies.create(x, 0, 'enemy').setScale(0.2);
+        e.body.setVelocityY(100 + this.time.now / 2000);
       }});
-      this.physics.add.overlap(bullets,enemies,(b,e)=>{ b.destroy(); e.destroy(); });
-      this.physics.add.overlap(shooterPlayer,enemies,()=>restart('shooter'));
+      this.physics.add.overlap(bullets, enemies, (b, e) => { b.destroy(); e.destroy(); });
+      this.physics.add.overlap(ship, enemies, () => restartGame('shooter'));
     }
-    function shootUpdate() {
-      shooterPlayer.setVelocityX(0);
-      if (shootCursor.left.isDown) shooterPlayer.setVelocityX(-200);
-      else if (shootCursor.right.isDown) shooterPlayer.setVelocityX(200);
-      if (Phaser.Input.Keyboard.JustDown(shootCursor.space)) {
-        const b = bullets.create(shooterPlayer.x,shooterPlayer.y-20,'bullet').setScale(0.2);
+    function shooterUpdate() {
+      ship.setVelocityX(0);
+      if (cursors.left.isDown) ship.setVelocityX(-200);
+      else if (cursors.right.isDown) ship.setVelocityX(200);
+      if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
+        const b = bullets.create(ship.x, ship.y - 20, 'bullet').setScale(0.2);
         b.body.setVelocityY(-300);
       }
     }
-    // Platform Jumper
+    // ---- Game 3: Platform Jumper ----
     function initJumper() {
-      const cfg = { type:Phaser.AUTO, width:400, height:300, backgroundColor:'transparent', parent:'game-jumper',
-        physics:{ default:'arcade', arcade:{ gravity:{y:500} } },
-        scene:{ preload:jumpPre, create:jumpCreate, update:jumpUpdate }
+      const cfg = {
+        type: Phaser.AUTO, width: 400, height: 300,
+        backgroundColor: 'transparent', parent: 'game-jumper',
+        physics: { default: 'arcade', arcade: { gravity: { y: 500 } } },
+        scene: { preload: jumperPreload, create: jumperCreate, update: jumperUpdate }
       };
       games.jumper = new Phaser.Game(cfg);
     }
-    let jumperPlayer, platforms, jumpCursor;
-    function jumpPre() { this.load.image('block','https://i.imgur.com/8gSx4fT.png'); }
-    function jumpCreate() {
-      jumpCursor = this.input.keyboard.createCursorKeys();
-      platforms = this.physics.add.staticGroup();
-      platforms.create(200,300,'block').setScale(4,0.5).refreshBody();
-      jumperPlayer = this.physics.add.sprite(50,250,'block').setTint(0x00ffaa).setDisplaySize(20,20);
-      this.physics.add.collider(jumperPlayer,platforms);
+    let playerJ, platformGroup;
+    function jumperPreload() { this.load.image('block', 'https://i.imgur.com/8gSx4fT.png'); }
+    function jumperCreate() {
+      cursors = this.input.keyboard.createCursorKeys();
+      platformGroup = this.physics.add.staticGroup();
+      platformGroup.create(200, 300, 'block').setScale(4, 0.5).refreshBody();
+      playerJ = this.physics.add.sprite(50, 250, 'block').setTint(0x00ffaa).setDisplaySize(20,20);
+      this.physics.add.collider(playerJ, platformGroup, null, null, this);
     }
-    function jumpUpdate() {
-      if (jumpCursor.left.isDown) jumperPlayer.setVelocityX(-150);
-      else if (jumpCursor.right.isDown) jumperPlayer.setVelocityX(150);
-      else jumperPlayer.setVelocityX(0);
-      if (Phaser.Input.Keyboard.JustDown(jumpCursor.up) && jumperPlayer.body.touching.down) jumperPlayer.setVelocityY(-300);
-      if (jumperPlayer.y>350) restart('jumper');
+    function jumperUpdate() {
+      if (cursors.left.isDown) playerJ.setVelocityX(-150);
+      else if (cursors.right.isDown) playerJ.setVelocityX(150);
+      else playerJ.setVelocityX(0);
+      if (Phaser.Input.Keyboard.JustDown(cursors.up) && playerJ.body.onFloor()) playerJ.setVelocityY(-300);
+      if (playerJ.y > 350) restartGame('jumper');
     }
-    // Block Drop
+    // ---- Game 4: Block Drop ----
     function initDrop() {
-      const cfg = { type:Phaser.AUTO, width:400, height:300, backgroundColor:'transparent', parent:'game-drop',
-        physics:{ default:'arcade', arcade:{ gravity:{y:0} } },
-        scene:{ create:dropCreate, update:dropUpdate }
+      const cfg = {
+        type: Phaser.AUTO, width: 400, height: 300,
+        backgroundColor: 'transparent', parent: 'game-drop',
+        physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
+        scene: { create: dropCreate, update: dropUpdate }
       };
       games.drop = new Phaser.Game(cfg);
     }
-    let dropBlock, stackY=300, dropCursor;
+    let dropBlock, dropCursors;
     function dropCreate() {
-      dropCursor = this.input.keyboard.createCursorKeys();
-      dropBlock = this.add.rectangle(200,20,50,20,0x00ff00);
+      dropCursors = this.input.keyboard.createCursorKeys();
+      dropBlock = this.add.rectangle(200, 20, 50, 20, 0x00ff00);
     }
     function dropUpdate() {
-      if (dropCursor.left.isDown && dropBlock.y<30) dropBlock.x -=5;
-      else if (dropCursor.right.isDown && dropBlock.y<30) dropBlock.x +=5;
-      if (Phaser.Input.Keyboard.JustDown(dropCursor.space) && dropBlock.y<30) {
+      if (dropCursors.left.isDown && dropBlock.y < 30) dropBlock.x -= 5;
+      else if (dropCursors.right.isDown && dropBlock.y < 30) dropBlock.x += 5;
+      if (Phaser.Input.Keyboard.JustDown(dropCursors.space) && dropBlock.y < 30) {
         this.physics.world.enable(dropBlock);
         dropBlock.body.setVelocityY(200);
-        this.physics.add.collider(dropBlock, this.physics.add.staticGroup({ key: 'ground', frameQuantity:1 }).create(dropBlock.x, stackY, null).setDisplaySize(50,20), () => {
-          stackY -=20;
-          this.scene.restart();
+        this.physics.add.collider(dropBlock, this.physics.add.staticGroup().create(dropBlock.x, 300, null).setDisplaySize(50,20), () => {
+          restartGame('drop');
         });
       }
-      if (dropBlock.y>350) restart('drop');
-    }
-    // Restart handler
-    function restart(key) {
-      stopAll();
-      document.getElementById(`overlay-${key}`).classList.remove('hidden');
+      if (dropBlock.y > 350) restartGame('drop');
     }
   </script>
 </body>
