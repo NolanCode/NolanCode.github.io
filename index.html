@@ -104,6 +104,19 @@
       top: 10px;
       bottom: auto;
     }
+
+    .ai-pointer {
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 15px solid lime;
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -134,6 +147,10 @@
         square.style.setProperty('--rand-rot', `${Math.random() * 360}deg`);
         square.style.setProperty('--duration', `${5 + Math.random() * 10}s`);
 
+        const pointer = document.createElement('div');
+        pointer.className = 'ai-pointer';
+        square.appendChild(pointer);
+
         let isDragging = false;
         let offset = { x: 0, y: 0 };
 
@@ -157,8 +174,60 @@
         document.body.appendChild(square);
       }
     }
+
     spawnSquares();
 
+    function aiControlSquares() {
+      const squares = document.querySelectorAll('.floating-square');
+      if (squares.length === 0) return;
+
+      const square = squares[Math.floor(Math.random() * squares.length)];
+      const pointer = square.querySelector('.ai-pointer');
+
+      pointer.style.display = 'block';
+
+      let step = 0;
+      const steps = 100;
+      const startX = square.offsetLeft;
+      const startY = square.offsetTop;
+      const targetX = window.innerWidth - 60;
+      const targetY = 60;
+
+      function animate() {
+        const progress = step / steps;
+        square.style.left = `${startX + (targetX - startX) * progress}px`;
+        square.style.top = `${startY + (targetY - startY) * progress}px`;
+        step++;
+
+        if (step <= steps) {
+          requestAnimationFrame(animate);
+        } else {
+          setTimeout(() => {
+            step = 0;
+            const returnX = 100 + Math.random() * 200;
+            const returnY = 200 + Math.random() * 200;
+            function returnMove() {
+              const progressBack = step / steps;
+              square.style.left = `${targetX + (returnX - targetX) * progressBack}px`;
+              square.style.top = `${targetY + (returnY - targetY) * progressBack}px`;
+              step++;
+              if (step <= steps) {
+                requestAnimationFrame(returnMove);
+              } else {
+                pointer.style.display = 'none';
+              }
+            }
+            requestAnimationFrame(returnMove);
+          }, 1000);
+        }
+      }
+
+      animate();
+    }
+
+    setInterval(aiControlSquares, 5000); // AI takes control every 5 seconds
+
+    // Gravity game (untouched)
     let gravityGame = {
       ctx: null,
       player: { x: 80, y: 250, size: 20, gravity: 1 },
