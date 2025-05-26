@@ -7,7 +7,8 @@
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
   <style>
     :root {
-      --bg-color: #1a1a2e;
+      --bg-color-1: #1a1a2e;
+      --bg-color-2: #16213e;
       --panel-color: #16213e;
       --accent-color: #e94560;
       --text-color: #f0f0f0;
@@ -16,7 +17,7 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: var(--bg-color) url('https://i.imgur.com/3Z5bQPl.png') no-repeat center/cover;
+      background: linear-gradient(135deg, var(--bg-color-1), var(--bg-color-2));
       color: var(--text-color);
       font-family: 'Press Start 2P', cursive, sans-serif;
       overflow-y: auto;
@@ -78,8 +79,7 @@
     .parallax {
       position: absolute;
       inset: 0;
-      background: url('https://i.imgur.com/AdXqO6Q.png') no-repeat center/contain;
-      opacity: 0.2;
+      background: radial-gradient(circle at center, rgba(233,69,96,0.2) 0%, transparent 70%);
       pointer-events: none;
       transition: transform 0.1s;
     }
@@ -133,86 +133,178 @@
     </div>
   </div>
   <script>
-    // Parallax
+    // Parallax effect
     window.addEventListener('scroll', () => {
       document.querySelectorAll('.parallax').forEach(el => {
         el.style.transform = `translateY(${window.pageYOffset * 0.2}px)`;
       });
     });
-    // Placeholders
+    // Generate placeholders
     const grid = document.getElementById('game-grid');
     for (let i = 0; i < 23; i++) {
-      const box = document.createElement('div'); box.className='game-box';
-      const par = document.createElement('div'); par.className='parallax';
-      const ov = document.createElement('div'); ov.className='overlay';
-      const txt = document.createElement('div'); txt.className='coming-soon'; txt.textContent='Coming Soon';
+      const box = document.createElement('div'); box.className = 'game-box';
+      const par = document.createElement('div'); par.className = 'parallax';
+      const ov = document.createElement('div'); ov.className = 'overlay';
+      const txt = document.createElement('div'); txt.className = 'coming-soon'; txt.textContent = 'Coming Soon';
       ov.appendChild(txt);
       box.append(par, ov);
       grid.append(box);
     }
-    // Manage games
+    // Manage Phaser games
     const games = {};
-    function stopAll() { for (let k in games) if (games[k]) games[k].destroy(true); }
-    // Buttons
-    document.querySelectorAll('.overlay button').forEach(btn => btn.addEventListener('click', ()=>{
-      const key = btn.getAttribute('data-game');
-      stopAll();
-      document.getElementById(`overlay-${key}`).classList.add('hidden');
-      startGame(key);
-    }));
+    function stopAll() { Object.values(games).forEach(g => g && g.destroy(true)); }
+    document.querySelectorAll('.overlay button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-game');
+        stopAll();
+        document.getElementById(`overlay-${key}`).classList.add('hidden');
+        startGame(key);
+      });
+    });
     function restart(key) { stopAll(); document.getElementById(`overlay-${key}`).classList.remove('hidden'); }
     function startGame(key) {
-      if (key==='gravity') initGravity();
-      if (key==='shooter') initShooter();
-      if (key==='jumper') initJumper();
-      if (key==='drop') initDrop();
+      if (key === 'gravity') initGravity();
+      if (key === 'shooter') initShooter();
+      if (key === 'jumper') initJumper();
+      if (key === 'drop') initDrop();
     }
-    // Game 1
+    // ---- Gravity Switcher ----
     function initGravity() {
-      let obs=[], speed=100, timer=0;
-      const cfg={type:Phaser.AUTO,width:400,height:300,backgroundColor:'transparent',parent:'game-gravity',physics:{default:'arcade',arcade:{gravity:{y:0}}},scene:{create,update}};
-      games.gravity=new Phaser.Game(cfg);
-      function create(){
-        this.cursors=this.input.keyboard.createCursorKeys();
-        this.player=this.physics.add.rectangle(50,270,20,20,0x00ffb3);
+      let speed = 100, timer = 0, obs = [];
+      const cfg = {
+        type: Phaser.AUTO,
+        width: 400,
+        height: 300,
+        backgroundColor: 'transparent',
+        parent: 'game-gravity',
+        physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
+        scene: { create, update }
+      };
+      games.gravity = new Phaser.Game(cfg);
+      function create() {
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.player = this.physics.add.rectangle(50, 270, 20, 20, 0x00ffb3);
         this.physics.add.existing(this.player);
         this.player.body.setImmovable(true).setCollideWorldBounds(true);
-        this.time.addEvent({delay:100,loop:true,callback:()=>speed+=0.5});
+        this.time.addEvent({ delay: 100, loop: true, callback: () => speed += 0.5 });
       }
-      function update(_,dt){
-        if(this.cursors.up.isDown) this.tweens.add({targets:this.player,y:30,duration:200,overwrite:true});
-        else if(this.cursors.down.isDown) this.tweens.add({targets:this.player,y:270,duration:200,overwrite:true});
-        timer+=dt;
-        if(obs.length<2&&timer>1000){spawn();timer=0;}
-        obs.forEach((o,i)=>{o.x-=(speed*dt)/1000;if(o.x<-50){o.destroy();obs.splice(i,1);spawn();}if(Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(),o.getBounds()))restart('gravity');});
+      function update(_, dt) {
+        if (this.cursors.up.isDown)
+          this.tweens.add({ targets: this.player, y: 30, duration: 200, overwrite: true });
+        else if (this.cursors.down.isDown)
+          this.tweens.add({ targets: this.player, y: 270, duration: 200, overwrite: true });
+        timer += dt;
+        if (obs.length < 2 && timer > 1000) { spawn(); timer = 0; }
+        obs.forEach((o, i) => {
+          o.x -= (speed * dt) / 1000;
+          if (o.x < -50) { o.destroy(); obs.splice(i, 1); spawn(); }
+          if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.getBounds(), o.getBounds()))
+            restart('gravity');
+        });
       }
-      function spawn(){const y=Math.random()>0.5?30:270;const o=games.gravity.scene.scenes[0].add.rectangle(420,y,50,20,0xff0000);games.gravity.scene.scenes[0].physics.add.existing(o,true);obs.push(o);}
+      function spawn() {
+        const y = Math.random() > 0.5 ? 30 : 270;
+        const o = games.gravity.scene.scenes[0].add.rectangle(420, y, 50, 20, 0xff0000);
+        games.gravity.scene.scenes[0].physics.add.existing(o, true);
+        obs.push(o);
+      }
     }
-    // Game 2
-    function initShooter(){
-      let ship,bullets,enemies;
-      const cfg={type:Phaser.AUTO,width:400,height:300,backgroundColor:'transparent',parent:'game-shooter',physics:{default:'arcade',arcade:{gravity:{y:0}}},scene:{preload,create,update}};
-      games.shooter=new Phaser.Game(cfg);
-      function preload(){this.load.image('ship','https://i.imgur.com/6b7YjkQ.png');this.load.image('bullet','https://i.imgur.com/KYJcpuT.png');this.load.image('enemy','https://i.imgur.com/FJz6Z4G.png');}
-      function create(){this.cursors=this.input.keyboard.createCursorKeys();ship=this.physics.add.sprite(200,280,'ship').setScale(0.3).setCollideWorldBounds(true);bullets=this.physics.add.group();enemies=this.physics.add.group();this.time.addEvent({delay:1500,loop:true,callback:()=>{const x=Phaser.Math.Between(50,350);const e=enemies.create(x,0,'enemy').setScale(0.2);e.body.setVelocityY(100+this.time.now/2000);}});this.physics.add.overlap(bullets,enemies,(b,e)=>b.destroy()&&e.destroy());this.physics.add.overlap(ship,enemies,()=>restart('shooter'));}
-      function update(){ship.setVelocityX(0);if(this.cursors.left.isDown)ship.setVelocityX(-200);else if(this.cursors.right.isDown)ship.setVelocityX(200);if(Phaser.Input.Keyboard.JustDown(this.cursors.space)){const b=bullets.create(ship.x,ship.y-20,'bullet').setScale(0.2);b.body.setVelocityY(-300);}}
+    // ---- Space Shooter ----
+    function initShooter() {
+      let ship, bullets, enemies;
+      const cfg = {
+        type: Phaser.AUTO,
+        width: 400,
+        height: 300,
+        backgroundColor: 'transparent',
+        parent: 'game-shooter',
+        physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
+        scene: { preload, create, update }
+      };
+      games.shooter = new Phaser.Game(cfg);
+      function preload() {
+        this.load.image('ship', 'https://i.imgur.com/6b7YjkQ.png');
+        this.load.image('bullet', 'https://i.imgur.com/KYJcpuT.png');
+        this.load.image('enemy', 'https://i.imgur.com/FJz6Z4G.png');
+      }
+      function create() {
+        this.cursors = this.input.keyboard.createCursorKeys();
+        ship = this.physics.add.sprite(200, 280, 'ship').setScale(0.3).setCollideWorldBounds(true);
+        bullets = this.physics.add.group();
+        enemies = this.physics.add.group();
+        this.time.addEvent({ delay: 1500, loop: true, callback: () => {
+          const x = Phaser.Math.Between(50, 350);
+          const e = enemies.create(x, 0, 'enemy').setScale(0.2);
+          e.body.setVelocityY(100 + this.time.now / 2000);
+        }});
+        this.physics.add.overlap(bullets, enemies, (b, e) => { b.destroy(); e.destroy(); });
+        this.physics.add.overlap(ship, enemies, () => restart('shooter'));  }
+      function update() {
+        ship.setVelocityX(0);
+        if (this.cursors.left.isDown) ship.setVelocityX(-200);
+        else if (this.cursors.right.isDown) ship.setVelocityX(200);
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.space)) {
+          const b = bullets.create(ship.x, ship.y - 20, 'bullet').setScale(0.2);
+          b.body.setVelocityY(-300);
+        }
+      }
     }
-    // Game 3
-    function initJumper(){
-      let playerJ,platforms;
-      const cfg={type:Phaser.AUTO,width:400,height:300,backgroundColor:'transparent',parent:'game-jumper',physics:{default:'arcade',arcade:{gravity:{y:500}}},scene:{preload,create,update}};
-      games.jumper=new Phaser.Game(cfg);
-      function preload(){this.load.image('block','https://i.imgur.com/8gSx4fT.png');}
-      function create(){this.cursors=this.input.keyboard.createCursorKeys();platforms=this.physics.add.staticGroup();platforms.create(200,300,'block').setScale(4,0.5).refreshBody();playerJ=this.physics.add.sprite(50,250,'block').setTint(0x00ffaa).setDisplaySize(20,20);this.physics.add.collider(playerJ,platforms);}
-      function update(){if(this.cursors.left.isDown)playerJ.setVelocityX(-150);else if(this.cursors.right.isDown)playerJ.setVelocityX(150);else playerJ.setVelocityX(0);if(Phaser.Input.Keyboard.JustDown(this.cursors.up)&&playerJ.body.onFloor())playerJ.setVelocityY(-300);if(playerJ.y>350)restart('jumper');}
+    // ---- Platform Jumper ----
+    function initJumper() {
+      let playerJ, platforms;
+      const cfg = {
+        type: Phaser.AUTO,
+        width: 400,
+        height: 300,
+        backgroundColor: 'transparent',
+        parent: 'game-jumper',
+        physics: { default: 'arcade', arcade: { gravity: { y: 500 } } },
+        scene: { preload, create, update }
+      };
+      games.jumper = new Phaser.Game(cfg);
+      function preload() { this.load.image('block', 'https://i.imgur.com/8gSx4fT.png'); }
+      function create() {
+        this.cursors = this.input.keyboard.createCursorKeys();
+        platforms = this.physics.add.staticGroup();
+        platforms.create(200, 300, 'block').setScale(4, 0.5).refreshBody();
+        playerJ = this.physics.add.sprite(50, 250, 'block').setTint(0x00ffaa).setDisplaySize(20, 20);
+        this.physics.add.collider(playerJ, platforms);
+      }
+      function update() {
+        if (this.cursors.left.isDown) playerJ.setVelocityX(-150);
+        else if (this.cursors.right.isDown) playerJ.setVelocityX(150);
+        else playerJ.setVelocityX(0);
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.up) && playerJ.body.onFloor()) playerJ.setVelocityY(-300);
+        if (playerJ.y > 350) restart('jumper');
+      }
     }
-    // Game 4
-    function initDrop(){
+    // ---- Block Drop ----
+    function initDrop() {
       let dropC;
-      const cfg={type:Phaser.AUTO,width:400,height:300,backgroundColor:'transparent',parent:'game-drop',physics:{default:'arcade',arcade:{gravity:{y:0}}},scene:{create,update}};
-      games.drop=new Phaser.Game(cfg);
-      function create(){dropC=this.input.keyboard.createCursorKeys();this.drop=this.add.rectangle(200,20,50,20,0x00ff00);}      
-      function update(){if(dropC.left.isDown&&this.drop.y<30)this.drop.x-=5;else if(dropC.right.isDown&&this.drop.y<30)this.drop.x+=5;if(Phaser.Input.Keyboard.JustDown(dropC.space)&&this.drop.y<30){this.physics.world.enable(this.drop);this.drop.body.setVelocityY(200);this.physics.add.collider(this.drop,this.physics.add.staticGroup().create(this.drop.x,300,null).setDisplaySize(50,20),()=>restart('drop'));}if(this.drop.y>350)restart('drop');}
+      const cfg = {
+        type: Phaser.AUTO,
+        width: 400,
+        height: 300,
+        backgroundColor: 'transparent',
+        parent: 'game-drop',
+        physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
+        scene: { create, update }
+      };
+      games.drop = new Phaser.Game(cfg);
+      function create() {
+        dropC = this.input.keyboard.createCursorKeys();
+        this.drop = this.add.rectangle(200, 20, 50, 20, 0x00ff00);
+      }
+      function update() {
+        if (dropC.left.isDown && this.drop.y < 30) this.drop.x -= 5;
+        else if (dropC.right.isDown && this.drop.y < 30) this.drop.x += 5;
+        if (Phaser.Input.Keyboard.JustDown(dropC.space) && this.drop.y < 30) {
+          this.physics.world.enable(this.drop);
+          this.drop.body.setVelocityY(200);
+          this.physics.add.collider(this.drop, this.physics.add.staticGroup().create(this.drop.x, 300, null).setDisplaySize(50,20), ()=>restart('drop'));
+        }
+        if (this.drop.y > 350) restart('drop');
+      }
     }
   </script>
 </body>
