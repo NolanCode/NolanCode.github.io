@@ -1,10 +1,161 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My First Website</title>
+  <title>Gravity Ball</title>
+  <script src="phaser.min.js"></script>
+  <style>
+    body {
+      text-align: center;
+      background: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+    #game-container {
+      width: 400px;
+      margin: 20px auto;
+    }
+    #start-button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <p>This is my first GitHub Pages site!</p>
+
+  <h1>Gravity Ball</h1>
+  <button id="start-button">Start Game</button>
+  <div id="game-container"></div>
+
+  <script>
+    let game;
+    let gameStarted = false;
+
+    document.getElementById('start-button').onclick = () => {
+      if (gameStarted) return;
+      gameStarted = true;
+
+      const config = {
+        type: Phaser.AUTO,
+        width: 400,
+        height: 300,
+        backgroundColor: '#ffffff',
+        parent: 'game-container',
+        physics: {
+          default: 'arcade',
+          arcade: {
+            gravity: { y: 0 },
+            debug: false
+          }
+        },
+        scene: {
+          preload,
+          create,
+          update
+        }
+      };
+
+      game = new Phaser.Game(config);
+    };
+
+    let player, cursors, timerText, elapsedTime = 0;
+    let obstacles = [];
+    let obstacleSpeed = 100;
+    let spawnTimer = 0;
+    const maxObstacles = 2;
+
+    function preload() {}
+
+    function create() {
+      cursors = this.input.keyboard.createCursorKeys();
+
+      // Ball setup
+      player = this.physics.add.sprite(50, 270, null).setDisplaySize(20, 20);
+      player.body.setAllowGravity(false);
+      player.setImmovable(true);
+      player.setCollideWorldBounds(true);
+      player.setTint(0x0077ff);
+
+      // Timer display
+      timerText = this.add.text(10, 10, 'Time: 0s', {
+        font: '16px Arial',
+        fill: '#000'
+      });
+
+      // Timer to spawn obstacles every few seconds
+      this.time.addEvent({
+        delay: 100,
+        loop: true,
+        callback: () => {
+          elapsedTime += 0.1;
+          timerText.setText('Time: ' + elapsedTime.toFixed(1) + 's');
+          obstacleSpeed = 100 + Math.floor(elapsedTime * 5);
+        }
+      });
+
+      // Add collision check
+      this.physics.add.overlap(player, obstacles, () => {
+        endGame(this);
+      });
+    }
+
+    function update(time, delta) {
+      if (!player) return;
+
+      // Movement: press up to stick to top, down to bottom
+      if (cursors.up.isDown) {
+        player.setY(30);
+      } else if (cursors.down.isDown) {
+        player.setY(270);
+      }
+
+      // Handle obstacles
+      spawnTimer += delta;
+      if (obstacles.length < maxObstacles && spawnTimer > 1000) {
+        spawnObstacle(this);
+        spawnTimer = 0;
+      }
+
+      obstacles.forEach((obstacle, index) => {
+        obstacle.setVelocityX(-obstacleSpeed);
+
+        // Remove and respawn if off screen
+        if (obstacle.x < -50) {
+          obstacle.destroy();
+          obstacles.splice(index, 1);
+          spawnObstacle(this);
+        }
+
+        // Check collision manually
+        if (Phaser.Geom.Intersects.RectangleToRectangle(player.getBounds(), obstacle.getBounds())) {
+          endGame(this);
+        }
+      });
+    }
+
+    function spawnObstacle(scene) {
+      const y = Math.random() > 0.5 ? 30 : 270; // ceiling or floor
+      const obstacle = scene.physics.add.sprite(420, y, null).setDisplaySize(50, 20);
+      obstacle.setTint(0xff0000);
+      obstacle.setImmovable(true);
+      obstacle.body.setAllowGravity(false);
+      obstacle.setVelocityX(-obstacleSpeed);
+      obstacles.push(obstacle);
+    }
+
+    function endGame(scene) {
+      scene.physics.pause();
+      const deathText = scene.add.text(200, 150, 'YOU DIED\nClick to Restart', {
+        font: '20px Arial',
+        fill: '#ff0000',
+        align: 'center'
+      });
+      deathText.setOrigin(0.5);
+      scene.input.once('pointerdown', () => {
+        game.destroy(true);
+        gameStarted = false;
+        document.getElementById('start-button').innerText = "Restart Game";
+      });
+    }
+  </script>
 </body>
 </html>
