@@ -137,175 +137,8 @@
     <div class="game-box"><div class="coming-soon">Coming Soon</div></div>
   </div>
 
-  <!-- Gravity Game Code Placeholder -->
-<script>
-  // Gravity Game Code Here
-
-  let gravityGame = {
-    ctx: null,
-    player: { x: 80, y: 250, size: 20, gravity: 1 },
-    enemies: [],
-    isRunning: false,
-    speed: 2,
-    canvas: null,
-    timer: 0,
-    timerId: null
-  };
-
-  function startGravitySwitcher(btn) {
-    document.body.style.overflow = 'hidden';
-    btn.style.display = 'none';
-    const canvas = document.getElementById('gravityCanvas');
-    const ctx = canvas.getContext('2d');
-    gravityGame.canvas = canvas;
-    gravityGame.ctx = ctx;
-    gravityGame.enemies = [];
-    gravityGame.speed = 2;
-    gravityGame.timer = 0;
-    gravityGame.player.y = 250;
-    gravityGame.isRunning = true;
-    document.getElementById('gravityTimer').innerText = '0.0s';
-
-    gravityGame.timerId = setInterval(() => {
-      gravityGame.timer += 0.1;
-      document.getElementById('gravityTimer').innerText = `${gravityGame.timer.toFixed(1)}s`;
-      if (gravityGame.isRunning) gravityGame.speed += 0.05;
-    }, 100);
-
-    requestAnimationFrame(updateGravity);
-  }
-
-  document.addEventListener('keydown', (e) => {
-    if (!gravityGame.isRunning) return;
-    if (e.key === 'w') {
-      gravityGame.player.gravity = -1;
-      animateGravitySwitch(-1);
-    } else if (e.key === 's') {
-      gravityGame.player.gravity = 1;
-      animateGravitySwitch(1);
-    }
-  });
-
-  function animateGravitySwitch(direction) {
-    const start = gravityGame.player.y;
-    const end = direction === 1 ? 250 : 30;
-    let startTime = null;
-
-    function animate(time) {
-      if (!startTime) startTime = time;
-      const elapsed = time - startTime;
-      const progress = Math.min(elapsed / 70, 1);
-      gravityGame.player.y = start + (end - start) * progress;
-      if (progress < 1) requestAnimationFrame(animate);
-    }
-    requestAnimationFrame(animate);
-  }
-
-  function updateGravity() {
-    const { ctx, player, canvas, enemies } = gravityGame;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    player.y += 0.1 * player.gravity;
-    player.y = Math.max(30, Math.min(250, player.y));
-
-    ctx.fillStyle = '#0f0';
-    ctx.fillRect(player.x, player.y, player.size, player.size);
-
-    if (Math.random() < 0.015) {
-      let y = Math.random() < 0.5 ? 30 : 250;
-      if (!enemies.some(e => Math.abs(e.y - y) < 50 && e.x > 300)) {
-        enemies.push({ x: 400, y: y, size: 20 });
-      }
-    }
-
-    ctx.fillStyle = '#f00';
-    for (let i = enemies.length - 1; i >= 0; i--) {
-      let e = enemies[i];
-      e.x -= gravityGame.speed;
-      ctx.fillRect(e.x, e.y, e.size, e.size);
-
-      if (
-        e.x < player.x + player.size &&
-        e.x + e.size > player.x &&
-        e.y < player.y + player.size &&
-        e.y + e.size > player.y
-      ) {
-        endGravityGame();
-      }
-      if (e.x + e.size < 0) enemies.splice(i, 1);
-    }
-
-    if (gravityGame.isRunning) requestAnimationFrame(updateGravity);
-  }
-
-  function endGravityGame() {
-    gravityGame.isRunning = false;
-    clearInterval(gravityGame.timerId);
-    document.querySelector('#gravityBox .play-btn').style.display = 'block';
-    document.body.style.overflow = 'auto';
-  }
-</script>
-
-<script>
-  // Create settings button
-  const settingsBtn = document.createElement('button');
-  settingsBtn.textContent = '⚙️';
-  settingsBtn.style.position = 'fixed';
-  settingsBtn.style.bottom = '20px';
-  settingsBtn.style.right = '20px';
-  settingsBtn.style.padding = '0.5rem 1rem';
-  settingsBtn.style.fontSize = '1.5rem';
-  settingsBtn.style.background = '#333';
-  settingsBtn.style.color = 'white';
-  settingsBtn.style.border = 'none';
-  settingsBtn.style.borderRadius = '10px';
-  settingsBtn.style.cursor = 'pointer';
-  document.body.appendChild(settingsBtn);
-
-  // Create popup
-  const popup = document.createElement('div');
-  popup.style.position = 'fixed';
-  popup.style.top = '50%';
-  popup.style.left = '50%';
-  popup.style.transform = 'translate(-50%, -50%)';
-  popup.style.background = '#222';
-  popup.style.color = 'white';
-  popup.style.padding = '2rem';
-  popup.style.borderRadius = '15px';
-  popup.style.boxShadow = '0 0 20px #000';
-  popup.style.display = 'none';
-  popup.style.zIndex = '1000';
-  popup.innerHTML = `
-    <h2>Settings</h2>
-    <label><input type="checkbox" id="toggleAiPointer" checked> AI Pointer Active</label>
-    <br/><br/>
-    <button id="closeSettings">Close</button>
-  `;
-  document.body.appendChild(popup);
-
-  // Show popup on button click
-  settingsBtn.addEventListener('click', () => {
-    popup.style.display = 'block';
-  });
-
-  // Close popup
-  document.getElementById('closeSettings').addEventListener('click', () => {
-    popup.style.display = 'none';
-  });
-
-  // Example: toggle AI pointer visibility
-  document.getElementById('toggleAiPointer').addEventListener('change', (e) => {
-    const showPointers = e.target.checked;
-    document.querySelectorAll('.ai-pointer').forEach(pointer => {
-      pointer.style.display = showPointers ? 'block' : 'none';
-    });
-  });
-</script>
-  
-  </script>
-
-  <!-- Drag + AI Cube Control Code -->
   <script>
+    // Drag + AI Cube Control Code Here
     function spawnSquares(count = 10) {
       for (let i = 0; i < count; i++) {
         const square = document.createElement('div');
@@ -395,54 +228,111 @@
     setInterval(aiControlSquares, 5000);
   </script>
 
-  <!-- Theme Switching Code Placeholder -->
-<script>
-  // Theme Switching Code Here
+  <script>
+    // Gravity Game Code Here
+    let gravityGame = {
+      ctx: null,
+      player: { x: 80, y: 250, size: 20, gravity: 1 },
+      enemies: [],
+      isRunning: false,
+      speed: 2,
+      canvas: null,
+      timer: 0,
+      timerId: null
+    };
 
-  // Create theme toggle button
-  const themeBtn = document.createElement('button');
-  themeBtn.textContent = '🌓';
-  themeBtn.style.position = 'fixed';
-  themeBtn.style.bottom = '20px';
-  themeBtn.style.left = '20px';
-  themeBtn.style.padding = '0.5rem 1rem';
-  themeBtn.style.fontSize = '1.5rem';
-  themeBtn.style.background = '#333';
-  themeBtn.style.color = 'white';
-  themeBtn.style.border = 'none';
-  themeBtn.style.borderRadius = '10px';
-  themeBtn.style.cursor = 'pointer';
-  document.body.appendChild(themeBtn);
+    function startGravitySwitcher(btn) {
+      document.body.style.overflow = 'hidden';
+      btn.style.display = 'none';
+      const canvas = document.getElementById('gravityCanvas');
+      const ctx = canvas.getContext('2d');
+      gravityGame.canvas = canvas;
+      gravityGame.ctx = ctx;
+      gravityGame.enemies = [];
+      gravityGame.speed = 2;
+      gravityGame.timer = 0;
+      gravityGame.player.y = 250;
+      gravityGame.isRunning = true;
+      document.getElementById('gravityTimer').innerText = '0.0s';
 
-  // Store current theme in localStorage
-  const storedTheme = localStorage.getItem('theme');
-  if (storedTheme === 'light') setLightTheme();
+      gravityGame.timerId = setInterval(() => {
+        gravityGame.timer += 0.1;
+        document.getElementById('gravityTimer').innerText = `${gravityGame.timer.toFixed(1)}s`;
+        if (gravityGame.isRunning) gravityGame.speed += 0.05;
+      }, 100);
 
-  themeBtn.addEventListener('click', () => {
-    const isDark = document.documentElement.style.getPropertyValue('--bg-dark') === '#1a002d';
-    if (isDark) {
-      setLightTheme();
-      localStorage.setItem('theme', 'light');
-    } else {
-      setDarkTheme();
-      localStorage.setItem('theme', 'dark');
+      requestAnimationFrame(updateGravity);
     }
-  });
 
-  function setLightTheme() {
-    document.documentElement.style.setProperty('--bg-dark', '#f4f4f4');
-    document.documentElement.style.setProperty('--purple-light', 'rgba(100, 0, 200, 0.1)');
-    document.documentElement.style.setProperty('--highlight', '#6200ee');
-    document.body.style.background = '#f4f4f4';
-  }
+    document.addEventListener('keydown', (e) => {
+      if (!gravityGame.isRunning) return;
+      if (e.key === 'w') {
+        gravityGame.player.gravity = -1;
+        animateGravitySwitch(-1);
+      } else if (e.key === 's') {
+        gravityGame.player.gravity = 1;
+        animateGravitySwitch(1);
+      }
+    });
 
-  function setDarkTheme() {
-    document.documentElement.style.setProperty('--bg-dark', '#1a002d');
-    document.documentElement.style.setProperty('--purple-light', 'rgba(200, 150, 255, 0.2)');
-    document.documentElement.style.setProperty('--highlight', '#a166ff');
-    document.body.style.background = '#1a002d';
-  }
-</script>
+    function animateGravitySwitch(direction) {
+      const start = gravityGame.player.y;
+      const end = direction === 1 ? 250 : 30;
+      let startTime = null;
 
+      function animate(time) {
+        if (!startTime) startTime = time;
+        const elapsed = time - startTime;
+        const progress = Math.min(elapsed / 70, 1);
+        gravityGame.player.y = start + (end - start) * progress;
+        if (progress < 1) requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+    }
+
+    function updateGravity() {
+      const { ctx, player, canvas, enemies } = gravityGame;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      player.y += 0.1 * player.gravity;
+      player.y = Math.max(30, Math.min(250, player.y));
+
+      ctx.fillStyle = '#0f0';
+      ctx.fillRect(player.x, player.y, player.size, player.size);
+
+      if (Math.random() < 0.015) {
+        let y = Math.random() < 0.5 ? 30 : 250;
+        if (!enemies.some(e => Math.abs(e.y - y) < 50 && e.x > 300)) {
+          enemies.push({ x: 400, y: y, size: 20 });
+        }
+      }
+
+      ctx.fillStyle = '#f00';
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        let e = enemies[i];
+        e.x -= gravityGame.speed;
+        ctx.fillRect(e.x, e.y, e.size, e.size);
+
+        if (
+          e.x < player.x + player.size &&
+          e.x + e.size > player.x &&
+          e.y < player.y + player.size &&
+          e.y + e.size > player.y
+        ) {
+          endGravityGame();
+        }
+        if (e.x + e.size < 0) enemies.splice(i, 1);
+      }
+
+      if (gravityGame.isRunning) requestAnimationFrame(updateGravity);
+    }
+
+    function endGravityGame() {
+      gravityGame.isRunning = false;
+      clearInterval(gravityGame.timerId);
+      document.querySelector('#gravityBox .play-btn').style.display = 'block';
+      document.body.style.overflow = 'auto';
+    }
+  </script>
 </body>
 </html>
