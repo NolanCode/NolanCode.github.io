@@ -293,202 +293,195 @@ function resetOtherGames(activeId) {
 <!-- copy-paste Section 2 (Fixed Gravity) end -->
 
 
-<!-- copy-paste Section 3 (Wall Jumper Game) start -->
+<!-- UPDATED Section 3 (Wall Jumper Game) start -->
 <script>
-  (function game2() {
-    const box = document.getElementById('game2');
-    const canvas = box.querySelector('canvas');
-    canvas.width = box.clientWidth;
-    canvas.height = 300;
-    const ctx = canvas.getContext('2d');
-    const btn = box.querySelector('.play-btn');
-    const timerEl = box.querySelector('.timer');
+(function game2() {
+  const box = document.getElementById('game2');
+  const canvas = box.querySelector('canvas');
+  canvas.width = box.clientWidth;
+  canvas.height = 300;
+  const ctx = canvas.getContext('2d');
+  const btn = box.querySelector('.play-btn');
+  const timerEl = box.querySelector('.timer');
 
-    // Constants
-    const BLUE = 20;                     // player size
-    const GAP = BLUE * 4.2;              // vertical gap
-    const P_HEIGHT = BLUE / 2;           // platform thickness
-    const GRAVITY = 0.4;                 // gravity
-    const JUMP_VY = -10;                 // jump strength
-    const BASE_RISE = 0.2;               // base rise speed per frame
+  // Constants
+  const BLUE = 20;
+  const GAP = BLUE * 4.2;
+  const P_HEIGHT = BLUE / 2;
+  const GRAVITY = 0.4;
+  const JUMP_VY = -10;
+  const BASE_RISE = 0.2;
+  const SPAWN_COOLDOWN = 0.04; // seconds
 
-    // State
-    let playing = false,
-        t = 0,
-        intervalId,
-        player,
-        platforms,
-        obstacles,
-        doorSide;
+  // State
+  let playing = false, t = 0, intervalId, lastSpawnT = 0;
+  let player, platforms, obstacles;
 
-    // Initialize or reset all state
-    function resetGame() {
-      player = { x: 10, y: canvas.height - BLUE - P_HEIGHT, w: BLUE, h: BLUE, vy: 0, onGround: true };
-      platforms = [{ y: canvas.height - P_HEIGHT, color: randomColor() }];
-      obstacles = [];
-      doorSide = 'right';
-      t = 0;
-      timerEl.textContent = '0.0s';
-    }
+  function randomColor() {
+    const h = Math.random() * 360;
+    return `hsl(${h},70%,80%)`;
+  }
 
-    // Generate a random pastel color
-    function randomColor() {
-      const h = Math.random() * 360;
-      return `hsl(${h}, 70%, 80%)`;
-    }
-
-    // Spawn a new platform and its obstacles
-    function spawnPlatform() {
-      const last = platforms[platforms.length - 1];
-      const newY = last.y - GAP;
-      doorSide = (doorSide === 'left') ? 'right' : 'left';
-      platforms.push({ y: newY, color: randomColor() });
-      // obstacles for this platform
-      const count = Math.floor(Math.random() * 7);
-      for (let i = 0; i < count; i++) {
-        let ox = Math.random() * (canvas.width - BLUE * 2) + BLUE;
-        // avoid door region
-        if ((doorSide === 'left' && ox < BLUE * 2) || (doorSide === 'right' && ox > canvas.width - BLUE * 3)) {
-          ox = canvas.width / 2;
-        }
-        obstacles.push({
-          x: ox,
-          y: newY - (BLUE * 0.75),
-          w: BLUE * 0.75,
-          h: BLUE * 0.75,
-          hits: 0,
-          color: randomColor()
-        });
-      }
-    }
-
-    // Game over handler
-    function gameOver() {
-      clearInterval(intervalId);
-      playing = false;
-      lockScroll(false);
-      const overlay = document.createElement('div');
-      overlay.className = 'overlay';
-      overlay.textContent = 'YOU DIED';
-      overlay.onclick = () => {
-        overlay.remove();
-        btn.style.display = 'block';
-      };
-      box.appendChild(overlay);
-    }
-
-    // Main draw loop
-    function draw() {
-      if (!playing) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Rise speed increases slowly with time
-      const rise = BASE_RISE + t * 0.005;
-      // Move platforms & obstacles up
-      platforms.forEach(p => p.y -= rise);
-      obstacles.forEach(o => o.y -= rise);
-
-      // Spawn next platform when top platform is high enough
-      if (platforms[platforms.length - 1].y <= canvas.height - GAP - P_HEIGHT) {
-        spawnPlatform();
-      }
-
-      // Player physics
-      player.vy += GRAVITY;
-      player.y += player.vy;
-      // Platform collision
-      player.onGround = false;
-      for (const p of platforms) {
-        if (player.y + player.h >= p.y && player.y + player.h <= p.y + rise + 1) {
-          player.y = p.y - player.h;
-          player.vy = 0;
-          player.onGround = true;
-        }
-      }
-
-      // Wall collision
-      if (player.x < 0) player.x = 0;
-      if (player.x + player.w > canvas.width) player.x = canvas.width - player.w;
-
-      // Auto-move toward door
-      const doorX = doorSide === 'left' ? 10 : canvas.width - BLUE - 10;
-      player.x += (doorX > player.x) ? 1.2 : -1.2;
-
-      // Draw platforms
-      platforms.forEach(p => {
-        ctx.fillStyle = p.color;
-        ctx.fillRect(0, p.y, canvas.width, P_HEIGHT);
-      });
-
-      // Draw door
-      ctx.fillStyle = 'lime';
-      ctx.fillRect(doorX, platforms[0].y - BLUE, BLUE, BLUE);
-
-      // Draw and handle obstacles
-      for (let i = obstacles.length - 1; i >= 0; i--) {
-        const o = obstacles[i];
-        // Draw
-        ctx.fillStyle = o.color;
-        ctx.globalAlpha = 1 - o.hits * 0.5;
-        ctx.fillRect(o.x, o.y, o.w, o.h);
-        ctx.globalAlpha = 1;
-
-        // Side collision
-        if (
-          player.y + player.h > o.y &&
-          player.y < o.y + o.h &&
-          ((player.x + player.w > o.x && player.x < o.x) || 
-           (player.x < o.x + o.w && player.x + player.w > o.x + o.w))
-        ) {
-          o.hits++;
-          player.x += (player.x < o.x) ? -30 : 30; // knockback
-        }
-
-        // Remove if hit twice
-        if (o.hits >= 2) obstacles.splice(i, 1);
-      }
-
-      // Draw player
-      ctx.fillStyle = 'blue';
-      ctx.fillRect(player.x, player.y, player.w, player.h);
-
-      // End if hits ceiling
-      if (player.y <= 0) {
-        gameOver();
-        return;
-      }
-
-      requestAnimationFrame(draw);
-    }
-
-    // Button handler
-    btn.onclick = () => {
-      resetOtherGames('game2');
-      btn.style.display = 'none';
-      lockScroll(true);
-      resetGame();
-      playing = true;
-      intervalId = setInterval(() => {
-        t += 0.1;
-        timerEl.textContent = t.toFixed(1) + 's';
-      }, 100);
-      requestAnimationFrame(draw);
+  function resetGame() {
+    // Player starts on first platform
+    platforms = [{
+      y: canvas.height - P_HEIGHT,
+      color: randomColor(),
+      doorSide: 'right'
+    }];
+    player = {
+      x: 10,
+      y: platforms[0].y - BLUE,
+      w: BLUE, h: BLUE,
+      vy: 0,
+      onGround: true
     };
+    obstacles = [];
+    t = 0;
+    lastSpawnT = 0;
+    timerEl.textContent = '0.0s';
+  }
 
-    // Jump handler
-    document.addEventListener('keydown', e => {
-      if (!playing) return;
-      if (e.code === 'Space' && player.onGround) {
-        player.vy = JUMP_VY;
-        player.onGround = false;
-      }
+  function spawnPlatform() {
+    const top = platforms[platforms.length - 1];
+    const newY = top.y - GAP;
+    const newDoor = top.doorSide === 'left' ? 'right' : 'left';
+    platforms.push({
+      y: newY,
+      color: randomColor(),
+      doorSide: newDoor
     });
+    // obstacles for this new level
+    const count = Math.floor(Math.random() * 7);
+    for (let i = 0; i < count; i++) {
+      let ox = Math.random() * (canvas.width - BLUE*2) + BLUE;
+      // avoid door and player zone
+      if ((newDoor==='left' && ox<BLUE*2) || (newDoor==='right' && ox>canvas.width-BLUE*2)) {
+        ox = BLUE*2;
+      }
+      if (Math.abs(ox - player.x) < BLUE*2) {
+        ox += BLUE*2;
+      }
+      obstacles.push({
+        x: ox,
+        y: newY - BLUE*0.75,
+        w: BLUE*0.75, h: BLUE*0.75,
+        hits: 0,
+        color: randomColor()
+      });
+    }
+  }
 
-    // Initialize
+  function gameOver() {
+    clearInterval(intervalId);
+    playing = false;
+    lockScroll(false);
+    const ov = document.createElement('div');
+    ov.className = 'overlay';
+    ov.textContent = 'YOU DIED';
+    ov.onclick = () => { ov.remove(); btn.style.display='block'; };
+    box.appendChild(ov);
+  }
+
+  function draw() {
+    if (!playing) return;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // time-based rise
+    const rise = BASE_RISE + t * 0.005;
+    platforms.forEach(p=>p.y -= rise);
+    obstacles.forEach(o=>o.y -= rise);
+
+    // spawn new level when top platform crosses threshold + cooldown
+    const now = t;
+    const top = platforms[platforms.length-1];
+    if (top.y <= canvas.height - GAP - P_HEIGHT && now - lastSpawnT > SPAWN_COOLDOWN) {
+      spawnPlatform();
+      lastSpawnT = now;
+    }
+
+    // player physics
+    player.vy += GRAVITY;
+    player.y += player.vy;
+    player.onGround = false;
+    // platform collision
+    for (const p of platforms) {
+      if (player.y + player.h >= p.y && player.y + player.h <= p.y + rise + 1) {
+        player.y = p.y - player.h;
+        player.vy = 0;
+        player.onGround = true;
+      }
+    }
+    // wall collision
+    if (player.x < 0) player.x = 0;
+    if (player.x + player.w > canvas.width) player.x = canvas.width - player.w;
+
+    // auto-move toward current door
+    const currentPlat = platforms.find(p=>p.y+P_HEIGHT >= player.y+player.h) || platforms[0];
+    const doorX = currentPlat.doorSide==='left' ? 10 : canvas.width - BLUE - 10;
+    player.x += (doorX > player.x ? 1.2 : -1.2);
+
+    // draw platforms & doors
+    for (const p of platforms) {
+      ctx.fillStyle = p.color;
+      ctx.fillRect(0, p.y, canvas.width, P_HEIGHT);
+      ctx.fillStyle = 'lime';
+      ctx.fillRect(doorX, p.y - BLUE, BLUE, BLUE);
+    }
+
+    // draw & handle obstacles
+    for (let i=obstacles.length-1;i>=0;i--) {
+      const o = obstacles[i];
+      ctx.fillStyle = o.color;
+      ctx.globalAlpha = 1 - o.hits*0.5;
+      ctx.fillRect(o.x, o.y, o.w, o.h);
+      ctx.globalAlpha = 1;
+      // side collision only
+      if (player.y+player.h > o.y && player.y < o.y+o.h &&
+         ((player.x+player.w>o.x && player.x<o.x && player.xDirection==='right') ||
+          (player.x<o.x+o.w && player.x+player.w>o.x+o.w && player.xDirection==='left'))) {
+        o.hits++;
+        player.x += player.xDirection==='right' ? -40 : 40;
+      }
+      if (o.hits>=2) obstacles.splice(i,1);
+    }
+
+    // draw player
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(player.x, player.y, player.w, player.h);
+
+    // ceiling collision = game over
+    if (player.y <= 0) return gameOver();
+
+    requestAnimationFrame(draw);
+  }
+
+  btn.onclick = () => {
+    resetOtherGames('game2');
+    btn.style.display='none';
+    lockScroll(true);
     resetGame();
-  })();
+    playing = true;
+    intervalId = setInterval(()=>{
+      t += 0.1;
+      timerEl.textContent = t.toFixed(1)+'s';
+    },100);
+    requestAnimationFrame(draw);
+  };
+
+  document.addEventListener('keydown',e=>{
+    if(!playing) return;
+    if(e.code==='Space' && player.onGround) {
+      player.vy = JUMP_VY;
+      player.onGround = false;
+    }
+  });
+
+  // init
+  resetGame();
+})();
 </script>
-<!-- copy-paste Section 3 (Wall Jumper Game) end -->
+<!-- UPDATED Section 3 end -->
 
 
 <!-- copy-paste Section 4 (Laser Dodger Game) start -->
