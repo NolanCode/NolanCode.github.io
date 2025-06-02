@@ -84,7 +84,7 @@
         transform: translateY(0) rotate(var(--rand-rot));
       }
       to {
-        transform: translateY(-150vh) rotate(calc(var(--rand-rot) + 360deg));
+        transform: translateY(-50vh) rotate(calc(var(--rand-rot) + 360deg));
       }
     }
     .coming-soon {
@@ -139,13 +139,13 @@
 
   <script>
     // Drag + AI Cube Control Code Here
-    function spawnSquares(count = 100) {
+    function spawnSquares(count = 200) {
       for (let i = 0; i < count; i++) {
         const square = document.createElement('div');
         square.className = 'floating-square';
         square.style.setProperty('--rand-x', Math.random());
         square.style.setProperty('--rand-rot', `${Math.random() * 360}deg`);
-        square.style.setProperty('--duration', `${5 + Math.random() * 50}s`);
+        square.style.setProperty('--duration', `${80 + Math.random() * 80}s`);
 
         const pointer = document.createElement('div');
         pointer.className = 'ai-pointer';
@@ -267,10 +267,10 @@
     document.addEventListener('keydown', (e) => {
       if (!gravityGame.isRunning) return;
       if (e.key === 'w') {
-        gravityGame.player.gravity = -.5;
+        gravityGame.player.gravity = -.099;
         animateGravitySwitch(-1);
       } else if (e.key === 's') {
-        gravityGame.player.gravity = .5;
+        gravityGame.player.gravity = .099;
         animateGravitySwitch(1);
       }
     });
@@ -283,7 +283,7 @@
       function animate(time) {
         if (!startTime) startTime = time;
         const elapsed = time - startTime;
-        const progress = Math.min(elapsed / 70, 1);
+        const progress = Math.min(elapsed / 700, 1);
         gravityGame.player.y = start + (end - start) * progress;
         if (progress < 1) requestAnimationFrame(animate);
       }
@@ -295,14 +295,14 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       player.y += 0.1 * player.gravity;
-      player.y = Math.max(30, Math.min(250, player.y));
+      player.y = Math.max(20, Math.min(250, player.y));
 
       ctx.fillStyle = '#0f0';
       ctx.fillRect(player.x, player.y, player.size, player.size);
 
       if (Math.random() < 0.015) {
-        let y = Math.random() < 0.5 ? 30 : 250;
-        if (!enemies.some(e => Math.abs(e.y - y) < 30 && e.x > 200)) {
+        let y = Math.random() < 0.5 ? 10 : 280;
+        if (!enemies.some(e => Math.abs(e.y - y) < 30000 && e.x > 2000)) {
           enemies.push({ x: 400, y: y, size: 20 });
         }
       }
