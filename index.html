@@ -139,13 +139,13 @@
 
   <script>
     // Drag + AI Cube Control Code Here
-    function spawnSquares(count = 10) {
+    function spawnSquares(count = 100) {
       for (let i = 0; i < count; i++) {
         const square = document.createElement('div');
         square.className = 'floating-square';
         square.style.setProperty('--rand-x', Math.random());
         square.style.setProperty('--rand-rot', `${Math.random() * 360}deg`);
-        square.style.setProperty('--duration', `${5 + Math.random() * 10}s`);
+        square.style.setProperty('--duration', `${5 + Math.random() * 50}s`);
 
         const pointer = document.createElement('div');
         pointer.className = 'ai-pointer';
@@ -232,7 +232,7 @@
     // Gravity Game Code Here
     let gravityGame = {
       ctx: null,
-      player: { x: 80, y: 250, size: 20, gravity: 1 },
+      player: { x: 80, y: 250, size: 20, gravity: .5 },
       enemies: [],
       isRunning: false,
       speed: 2,
@@ -267,10 +267,10 @@
     document.addEventListener('keydown', (e) => {
       if (!gravityGame.isRunning) return;
       if (e.key === 'w') {
-        gravityGame.player.gravity = -1;
+        gravityGame.player.gravity = -.5;
         animateGravitySwitch(-1);
       } else if (e.key === 's') {
-        gravityGame.player.gravity = 1;
+        gravityGame.player.gravity = .5;
         animateGravitySwitch(1);
       }
     });
@@ -302,7 +302,7 @@
 
       if (Math.random() < 0.015) {
         let y = Math.random() < 0.5 ? 30 : 250;
-        if (!enemies.some(e => Math.abs(e.y - y) < 50 && e.x > 300)) {
+        if (!enemies.some(e => Math.abs(e.y - y) < 30 && e.x > 200)) {
           enemies.push({ x: 400, y: y, size: 20 });
         }
       }
