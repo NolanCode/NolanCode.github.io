@@ -205,7 +205,7 @@
       function animate(time) {
         if (!startTime) startTime = time;
         const elapsed = time - startTime;
-        const progress = Math.min(elapsed / 70, 1);
+        const progress = Math.min(elapsed / 120, 1);
         gravityGame.player.y = start + (end - start) * progress;
         if (progress < 1) requestAnimationFrame(animate);
       }
