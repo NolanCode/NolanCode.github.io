@@ -149,99 +149,99 @@
     });
   }
 
-  // --- Gravity Switcher Game (Slot 1) ---
-  (function game1() {
-    const box = document.getElementById('game1');
-    const canvas = box.querySelector('canvas');
-    canvas.width = box.clientWidth;
-    canvas.height = 300;
-    const ctx = canvas.getContext('2d');
-    const btn = box.querySelector('.play-btn');
-    const timerEl = box.querySelector('.timer');
-
-    let t = 0,
-        playing = false,
-        intervalId,
-        obstacles = [],
-        posY = 250,
-        direction = 1; // 1=down, -1=up
-
-    btn.onclick = () => {
-      resetOtherGames('game1');
-      btn.style.display = 'none';
-      lockScroll(true);
-      playing = true;
-      t = 0;
-      posY = 250;
-      direction = 1;
-      obstacles = [];
-      intervalId = setInterval(() => {
-        t += 0.1;
-        timerEl.textContent = t.toFixed(1) + 's';
-      }, 100);
+  let gravityGame = {
+      ctx: null,
+      player: { x: 80, y: 250, size: 20, gravity: 1 },
+      enemies: [],
+      isRunning: false,
+      lastTime: 0,
+      speed: 2,
+      canvas: null
     };
 
-    document.addEventListener('keydown', e => {
-      if (!playing) return;
-      if (e.key === 'w') direction = -1;
-      if (e.key === 's') direction = 1;
+    function startGravitySwitcher(btn) {
+      document.body.style.overflow = 'hidden';
+      btn.style.display = 'none';
+      const canvas = document.getElementById('gravityCanvas');
+      const ctx = canvas.getContext('2d');
+      gravityGame.canvas = canvas;
+      gravityGame.ctx = ctx;
+      gravityGame.enemies = [];
+      gravityGame.speed = 2;
+      gravityGame.player.y = 250;
+      gravityGame.isRunning = true;
+      requestAnimationFrame(updateGravity);
+
+      setInterval(() => {
+        if (gravityGame.isRunning) {
+          gravityGame.speed += 0.1;
+        }
+      }, 2000);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (!gravityGame.isRunning) return;
+      if (e.key === 'w') {
+        gravityGame.player.gravity = -1;
+        animateGravitySwitch(-1);
+      } else if (e.key === 's') {
+        gravityGame.player.gravity = 1;
+        animateGravitySwitch(1);
+      }
     });
 
-    function draw() {
-      if (!playing) return;
+    function animateGravitySwitch(direction) {
+      const start = gravityGame.player.y;
+      const end = direction === 1 ? 250 : 30;
+      let startTime = null;
+
+      function animate(time) {
+        if (!startTime) startTime = time;
+        const elapsed = time - startTime;
+        const progress = Math.min(elapsed / 70, 1);
+        gravityGame.player.y = start + (end - start) * progress;
+        if (progress < 1) requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+    }
+
+    function updateGravity(timestamp) {
+      const { ctx, player, canvas, enemies } = gravityGame;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Smooth move player to floor/ceiling
-      const targetY = direction === 1 ? 250 : 30;
-      posY += (targetY - posY) * 0.3;
-      ctx.fillStyle = 'lime';
-      ctx.fillRect(50, posY, 20, 20);
+      ctx.fillStyle = '#0f0';
+      ctx.fillRect(player.x, player.y, player.size, player.size);
 
-      // Spawn obstacles with spacing
-      if (Math.random() < 0.02 + t * 0.002) {
-        const y = direction === 1 ? 30 : 250;
-        if (!obstacles.some(o => Math.abs(o.y - y) < 50)) {
-          obstacles.push({ x: canvas.width, y, size: 20 });
-        }
+      if (Math.random() < 0.03) {
+        enemies.push({ x: 400, y: Math.random() < 0.5 ? 30 : 250, size: 20 });
       }
 
-      // Move & render obstacles
-      ctx.fillStyle = 'red';
-      obstacles.forEach(o => o.x -= 3 + t * 0.05);
-      obstacles = obstacles.filter(o => {
-        ctx.fillRect(o.x, o.y, o.size, o.size);
-        return o.x + o.size > 0;
-      });
+      ctx.fillStyle = '#f00';
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        let e = enemies[i];
+        e.x -= gravityGame.speed;
+        ctx.fillRect(e.x, e.y, e.size, e.size);
 
-      // Collision check
-      for (let o of obstacles) {
         if (
-          o.x < 70 &&
-          o.x + 20 > 50 &&
-          o.y < posY + 20 &&
-          o.y + 20 > posY
+          e.x < player.x + player.size &&
+          e.x + e.size > player.x &&
+          e.y < player.y + player.size &&
+          e.y + e.size > player.y
         ) {
-          gameOver();
-          return;
+          endGravityGame();
         }
+        if (e.x + e.size < 0) enemies.splice(i, 1);
       }
 
-      requestAnimationFrame(draw);
+      if (gravityGame.isRunning) requestAnimationFrame(updateGravity);
     }
 
-    function gameOver() {
-      clearInterval(intervalId);
-      playing = false;
-      lockScroll(false);
-      const overlay = document.createElement('div');
-      overlay.className = 'overlay';
-      overlay.textContent = 'YOU DIED';
-      overlay.onclick = () => {
-        overlay.remove();
-        btn.style.display = 'block';
-      };
-      box.appendChild(overlay);
+    function endGravityGame() {
+      gravityGame.isRunning = false;
+      document.querySelector('#gravityBox .play-btn').style.display = 'block';
+      document.body.style.overflow = 'auto';
     }
+  </script>
 
     // Kick off the loop
     setInterval(draw, 1000 / 60);
