@@ -282,18 +282,11 @@ function resetOtherGames(activeId) {
       if (gravityGame.isRunning) requestAnimationFrame(updateGravity);
     }
 
-    function endGravityGame() {
-      gravityGame.isRunning = false;
-      clearInterval(gravityGame.timerId);
-      lockScroll(false);
-      const overlay = document.createElement('div');
-      overlay.className = 'overlay';
-      overlay.textContent = 'YOU DIED';
-      overlay.onclick = () => {
-        overlay.remove();
-        btn.style.display = 'block';
-      };
-      document.getElementById('game1').appendChild(overlay);
+   function endGravityGame() {
+  gravityGame.isRunning = false;
+  clearInterval(gravityGame.timerId);
+  document.querySelector('#game1 .play-btn').style.display = 'block';
+  lockScroll(false);
     }
   })();
 </script>
