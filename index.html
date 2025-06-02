@@ -89,11 +89,12 @@
   <div class="spacer"></div>
   <div class="game-grid" id="gameGrid">
     <!-- Slot 1 -->
-    <div class="game-box" id="game1">
-      <canvas></canvas>
-      <div class="timer">0.0s</div>
-      <button class="play-btn">Play</button>
-    </div>
+   <div class="game-box" id="game1">
+  <canvas id="gravityCanvas" width="400" height="300"></canvas>
+  <div class="timer" id="gravityTimer">0.0s</div>
+  <button class="play-btn">Play</button>
+</div>
+
     <!-- Slot 2 -->
     <div class="game-box" id="game2">
       <canvas></canvas>
@@ -125,59 +126,66 @@
       grid.appendChild(box);
     }
   </script>
-<!-- copy-paste Section 2 (Isolation & Gravity Game) start -->
+<!-- copy-paste Section 2 (Fixed Gravity Switcher) start -->
 <script>
-  // Lock page scrolling when a game is active
+  // Scroll lock & reset others
   function lockScroll(on) {
     document.body.style.overflow = on ? 'hidden' : '';
   }
-
-  // Reset other games back to their Play buttons
   function resetOtherGames(activeId) {
     document.querySelectorAll('.game-box').forEach(box => {
       if (box.id !== activeId) {
         const btn = box.querySelector('.play-btn');
         if (btn) btn.style.display = 'block';
-        const overlay = box.querySelector('.overlay');
-        if (overlay) overlay.remove();
-        const canvas = box.querySelector('canvas');
-        if (canvas) {
-          const ctx = canvas.getContext('2d');
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
+        const ov = box.querySelector('.overlay');
+        if (ov) ov.remove();
+        const c = box.querySelector('canvas');
+        if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
       }
     });
   }
 
-  let gravityGame = {
+  // --- Gravity Switcher Game (Slot 1) ---
+  (function gravitySwitcher() {
+    // State object
+    const gravityGame = {
       ctx: null,
       player: { x: 80, y: 250, size: 20, gravity: 1 },
       enemies: [],
       isRunning: false,
-      lastTime: 0,
       speed: 2,
-      canvas: null
+      canvas: null,
+      timer: 0,
+      timerId: null
     };
+    const btn = document.querySelector('#game1 .play-btn');
+    const canvas = document.getElementById('gravityCanvas');
+    const timerEl = document.getElementById('gravityTimer');
 
-    function startGravitySwitcher(btn) {
-      document.body.style.overflow = 'hidden';
+    function startGravitySwitcher() {
+      resetOtherGames('game1');
+      lockScroll(true);
       btn.style.display = 'none';
-      const canvas = document.getElementById('gravityCanvas');
-      const ctx = canvas.getContext('2d');
+
       gravityGame.canvas = canvas;
-      gravityGame.ctx = ctx;
+      gravityGame.ctx = canvas.getContext('2d');
       gravityGame.enemies = [];
       gravityGame.speed = 2;
+      gravityGame.timer = 0;
       gravityGame.player.y = 250;
       gravityGame.isRunning = true;
-      requestAnimationFrame(updateGravity);
+      timerEl.textContent = '0.0s';
 
-      setInterval(() => {
-        if (gravityGame.isRunning) {
-          gravityGame.speed += 0.1;
-        }
-      }, 2000);
+      gravityGame.timerId = setInterval(() => {
+        gravityGame.timer += 0.1;
+        timerEl.textContent = gravityGame.timer.toFixed(1) + 's';
+        if (gravityGame.isRunning) gravityGame.speed += 0.05;
+      }, 100);
+
+      requestAnimationFrame(updateGravity);
     }
+
+    btn.addEventListener('click', startGravitySwitcher);
 
     document.addEventListener('keydown', (e) => {
       if (!gravityGame.isRunning) return;
@@ -194,7 +202,6 @@
       const start = gravityGame.player.y;
       const end = direction === 1 ? 250 : 30;
       let startTime = null;
-
       function animate(time) {
         if (!startTime) startTime = time;
         const elapsed = time - startTime;
@@ -205,23 +212,33 @@
       requestAnimationFrame(animate);
     }
 
-    function updateGravity(timestamp) {
+    function updateGravity() {
       const { ctx, player, canvas, enemies } = gravityGame;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // continuous gravity effect
+      player.y += 0.1 * player.gravity;
+      player.y = Math.max(30, Math.min(250, player.y));
+
+      // draw player
       ctx.fillStyle = '#0f0';
       ctx.fillRect(player.x, player.y, player.size, player.size);
 
-      if (Math.random() < 0.03) {
-        enemies.push({ x: 400, y: Math.random() < 0.5 ? 30 : 250, size: 20 });
+      // spawn obstacles
+      if (Math.random() < 0.015) {
+        const y = Math.random() < 0.5 ? 30 : 250;
+        if (!enemies.some(e => Math.abs(e.y - y) < 50 && e.x > canvas.width - 100)) {
+          enemies.push({ x: canvas.width, y, size: 20 });
+        }
       }
 
+      // move & draw obstacles
       ctx.fillStyle = '#f00';
       for (let i = enemies.length - 1; i >= 0; i--) {
-        let e = enemies[i];
+        const e = enemies[i];
         e.x -= gravityGame.speed;
         ctx.fillRect(e.x, e.y, e.size, e.size);
-
+        // collision?
         if (
           e.x < player.x + player.size &&
           e.x + e.size > player.x &&
@@ -233,21 +250,28 @@
         if (e.x + e.size < 0) enemies.splice(i, 1);
       }
 
+      // loop
       if (gravityGame.isRunning) requestAnimationFrame(updateGravity);
     }
 
     function endGravityGame() {
       gravityGame.isRunning = false;
-      document.querySelector('#gravityBox .play-btn').style.display = 'block';
-      document.body.style.overflow = 'auto';
+      clearInterval(gravityGame.timerId);
+      lockScroll(false);
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      overlay.textContent = 'YOU DIED';
+      overlay.onclick = () => {
+        overlay.remove();
+        btn.style.display = 'block';
+      };
+      document.getElementById('game1').appendChild(overlay);
     }
-  </script>
-
-    // Kick off the loop
-    setInterval(draw, 1000 / 60);
   })();
 </script>
-<!-- copy-paste Section 2 end -->
+<!-- copy-paste Section 2 (Fixed Gravity) end -->
+
+
 <!-- copy-paste Section 3 (Wall Jumper Game) start -->
 <script>
   (function game2() {
